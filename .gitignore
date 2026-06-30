@@ -1,0 +1,15 @@
+# 1. Ignora tutti i file e le cartelle di default
+*
+
+# 2. Non ignorare le directory 
+!*/
+
+# 3. Non ignorare i file con i formati richiesti 
+!*.pdf
+!*.c
+!*.css
+!*.html
+!*.htl
+
+# 4. Non ignorare il file .gitignore stesso
+!.gitignore
