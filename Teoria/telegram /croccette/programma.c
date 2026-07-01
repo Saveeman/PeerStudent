@@ -6,24 +6,14 @@
  *           ./quiz altro.txt  (usa un file diverso)
  *
  * TRE tipi di domanda, separati da "---":
+ *   1) RISPOSTA SINGOLA : D: ... / A) ... / CORRETTA: A
+ *   2) RISPOSTA MULTIPLA: D: ... / A) ... / RISPOSTA_MULTIPLA: A, C
+ *   3) MATCHING         : D: ... / ELEMENTI: A)... / CATEGORIE: A)... / SOLUZIONE: B A
  *
- * 1) RISPOSTA SINGOLA
- *   D: testo
- *   A) opzione
- *   CORRETTA: A
- *
- * 2) RISPOSTA MULTIPLA
- *   D: testo
- *   A) opzione
- *   RISPOSTA_MULTIPLA: A, C
- *
- * 3) MATCHING (associa ogni ELEMENTO a una CATEGORIA)
- *   D: testo
- *   ELEMENTI:
- *   A) primo elemento
- *   CATEGORIE:
- *   A) prima categoria
- *   SOLUZIONE: B A   (elemento A -> categoria B, elemento B -> categoria A)
+ * Funzionamento: le domande vengono poste in ordine casuale. Alla fine mostra
+ * il punteggio (giuste/totali). Se ci sono sbagliate, premendo INVIO si ripete
+ * un nuovo round SOLO con le domande sbagliate, e si continua cosi' finche' non
+ * sono tutte corrette.
  */
 
 #include <stdio.h>
@@ -49,6 +39,7 @@ enum { T_SINGOLA, T_MULTIPLA, T_MATCHING };
 
 typedef struct {
     int  tipo;
+    int  numero;                  /* numero fisso della domanda nel file (1-based) */
     char testo[LEN_TESTO];
     char opzioni[MAX_OPZIONI][LEN_OPZIONE];
     int  n_opzioni;
@@ -80,7 +71,7 @@ static int carica_domande(const char *path) {
     if (!f) { fprintf(stderr, C_RED "Errore: non riesco ad aprire '%s'\n" C_RESET, path); return 0; }
     char riga[LEN_RIGA];
     Domanda *cur = NULL;
-    int sezione = 0; /* 0=opzioni/nessuno, 1=elementi, 2=categorie */
+    int sezione = 0;
 
     while (fgets(riga, sizeof(riga), f)) {
         rstrip(riga);
@@ -93,6 +84,7 @@ static int carica_domande(const char *path) {
             cur = &domande[n_domande++];
             memset(cur, 0, sizeof(*cur));
             cur->tipo = T_SINGOLA; sezione = 0;
+            cur->numero = n_domande;   /* numero fisso 1-based nell'ordine del file */
             strncpy(cur->testo, lstrip(p + 2), LEN_TESTO - 1);
         }
         else if (strcmp(p, "ELEMENTI:") == 0) { if (cur){ cur->tipo=T_MATCHING; sezione=1; } }
@@ -133,6 +125,7 @@ static void leggi_input(char *buf, int size) {
     rstrip(buf);
 }
 
+/* Ritorna 1 se giusta, 0 se sbagliata, -1 se l'utente vuole uscire (q) */
 static int gioca_scelta(Domanda *d) {
     int map[MAX_OPZIONI];
     for (int i = 0; i < d->n_opzioni; i++) map[i] = i;
@@ -206,55 +199,92 @@ int main(int argc, char *argv[]) {
     if (n_domande == 0) { fprintf(stderr, C_RED "Nessuna domanda caricata.\n" C_RESET); return 1; }
     srand((unsigned)time(NULL));
 
+    int totale = n_domande;  /* il "su 28" resta fisso per tutta la sessione */
+
     printf(C_BOLD C_CYAN "\n=== TWEB - Trainer domande a crocette ===\n" C_RESET);
-    printf("Caricate %d domande da '%s'.\n", n_domande, path);
+    printf("Caricate %d domande da '%s'.\n", totale, path);
     printf("Risposta " C_BOLD "multipla" C_RESET ": lettere insieme, es " C_YELLOW "ACD" C_RESET ".\n");
     printf("Domande " C_BOLD "matching" C_RESET ": una lettera-categoria per elemento, es " C_YELLOW "BADCE" C_RESET ".\n");
-    printf("Scrivi " C_YELLOW "q" C_RESET " per uscire.\n\n");
+    printf("Scrivi " C_YELLOW "q" C_RESET " per uscire.\n");
 
-    int ordine[MAX_DOMANDE];
-    for (int i = 0; i < n_domande; i++) ordine[i] = i;
-    shuffle(ordine, n_domande);
+    /* Lista degli indici da giocare in questo round. Si parte con tutte. */
+    int daGiocare[MAX_DOMANDE];
+    int nDaGiocare = n_domande;
+    for (int i = 0; i < n_domande; i++) daGiocare[i] = i;
 
-    int punteggio = 0, risposte = 0;
-    int sbagliate[MAX_DOMANDE], n_sbagliate = 0;
+    int round = 1;
+    int uscita = 0;
 
-    for (int k = 0; k < n_domande; k++) {
-        Domanda *d = &domande[ordine[k]];
-        printf(C_BOLD "Domanda %d/%d" C_RESET, k+1, n_domande);
-        if (d->tipo == T_MULTIPLA) printf(C_YELLOW "  (risposta multipla)" C_RESET);
-        else if (d->tipo == T_MATCHING) printf(C_YELLOW "  (abbinamento)" C_RESET);
-        printf("\n%s\n\n", d->testo);
+    while (nDaGiocare > 0 && !uscita) {
+        if (round == 1)
+            printf(C_BOLD C_CYAN "\n--- Inizio: %d domande in ordine casuale ---\n\n" C_RESET, nDaGiocare);
+        else
+            printf(C_BOLD C_YELLOW "\n--- Ripasso round %d: %d domande da rifare ---\n\n" C_RESET, round, nDaGiocare);
 
-        int esito = (d->tipo == T_MATCHING) ? gioca_matching(d) : gioca_scelta(d);
-        if (esito == -1) { printf(C_YELLOW "\nUscita anticipata.\n" C_RESET); break; }
-        risposte++;
-        if (esito == 1) punteggio++; else sbagliate[n_sbagliate++] = ordine[k];
-        printf("--------------------------------------------------\n\n");
-    }
+        /* ordine casuale del round */
+        shuffle(daGiocare, nDaGiocare);
 
-    printf(C_BOLD C_CYAN "=== Riepilogo ===\n" C_RESET);
-    printf("Risposte date: %d\n", risposte);
-    if (risposte > 0) {
-        double perc = 100.0*punteggio/risposte;
-        const char *col = (perc>=75.0)?C_GREEN:(perc>=50.0?C_YELLOW:C_RED);
-        printf("Corrette: %s%d/%d (%.0f%%)%s\n", col, punteggio, risposte, perc, C_RESET);
-    }
-    if (n_sbagliate > 0) {
-        printf(C_BOLD C_YELLOW "\n=== Ripasso delle domande sbagliate ===\n\n" C_RESET);
-        for (int s = 0; s < n_sbagliate; s++) {
-            Domanda *d = &domande[sbagliate[s]];
-            printf(C_BOLD "%d. %s\n" C_RESET, s+1, d->testo);
-            if (d->tipo == T_MATCHING)
-                for (int i = 0; i < d->n_elementi; i++)
-                    printf("   " C_GREEN "%s -> %s\n" C_RESET, d->elementi[i], d->categorie[d->soluzione[i]]);
-            else
-                for (int i = 0; i < d->n_opzioni; i++)
-                    if (d->corrette[i]) printf("   " C_GREEN "[corretta] %s\n" C_RESET, d->opzioni[i]);
-            printf("\n");
+        int sbagliate[MAX_DOMANDE];
+        int nSbagliate = 0;
+        int giuste = 0;
+
+        for (int k = 0; k < nDaGiocare; k++) {
+            Domanda *d = &domande[daGiocare[k]];
+
+            /* intestazione: progressione nel round + numero fisso della domanda */
+            printf(C_BOLD "Domanda %d/%d" C_RESET "  " C_CYAN "(domanda numero %d)" C_RESET,
+                   k + 1, nDaGiocare, d->numero);
+            if (d->tipo == T_MULTIPLA) printf(C_YELLOW "  (risposta multipla)" C_RESET);
+            else if (d->tipo == T_MATCHING) printf(C_YELLOW "  (abbinamento)" C_RESET);
+            printf("\n%s\n\n", d->testo);
+
+            int esito = (d->tipo == T_MATCHING) ? gioca_matching(d) : gioca_scelta(d);
+            if (esito == -1) { uscita = 1; break; }
+            if (esito == 1) giuste++;
+            else sbagliate[nSbagliate++] = daGiocare[k];
+
+            printf("--------------------------------------------------\n\n");
         }
-    } else if (risposte > 0) {
-        printf(C_GREEN C_BOLD "\nTutte giuste! In bocca al lupo per l'esame.\n" C_RESET);
+
+        if (uscita) {
+            printf(C_YELLOW "\nUscita anticipata.\n" C_RESET);
+            break;
+        }
+
+        /* riepilogo del round: sempre su "totale" (le 28) */
+        int totSbagliate = nSbagliate;
+        int totGiuste = totale - totSbagliate; /* rispetto all'intero set */
+
+        printf(C_BOLD C_CYAN "=== Riepilogo ===\n" C_RESET);
+        if (round == 1) {
+            double perc = 100.0 * giuste / nDaGiocare;
+            const char *col = (perc>=75.0)?C_GREEN:(perc>=50.0?C_YELLOW:C_RED);
+            printf("Hai risposto correttamente a %s%d su %d%s.\n", col, giuste, totale, C_RESET);
+            printf("Sbagliate: %s%d su %d%s.\n",
+                   (nSbagliate==0?C_GREEN:C_RED), nSbagliate, totale, C_RESET);
+        } else {
+            printf("In questo round: %s%d giuste%s, %s%d ancora da correggere%s.\n",
+                   C_GREEN, giuste, C_RESET,
+                   (nSbagliate==0?C_GREEN:C_RED), nSbagliate, C_RESET);
+        }
+        (void)totGiuste;
+
+        if (nSbagliate == 0) {
+            printf(C_GREEN C_BOLD "\nPerfetto! Tutte e %d le domande corrette. In bocca al lupo per l'esame!\n" C_RESET, totale);
+            break;
+        }
+
+        /* prepara il prossimo round con le sole sbagliate */
+        printf(C_BOLD "\nHai ancora %d domande da correggere.\n" C_RESET, nSbagliate);
+        printf("Premi " C_YELLOW "INVIO" C_RESET " per ripetere le domande sbagliate (o " C_YELLOW "q" C_RESET " per uscire): ");
+        char cont[16];
+        leggi_input(cont, sizeof(cont));
+        if (cont[0]=='q'||cont[0]=='Q') { printf(C_YELLOW "\nUscita.\n" C_RESET); break; }
+
+        for (int i = 0; i < nSbagliate; i++) daGiocare[i] = sbagliate[i];
+        nDaGiocare = nSbagliate;
+        round++;
     }
+
     return 0;
 }
