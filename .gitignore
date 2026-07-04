@@ -10,6 +10,7 @@
 !*.css
 !*.html
 !*.htl
+!*tex
 
 # 4. Non ignorare il file .gitignore stesso
 !.gitignore
