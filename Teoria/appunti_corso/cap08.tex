@@ -1,0 +1,307 @@
+\chapter{Richieste HTTP dal client: Fetch, Promise e JSON}
+
+\section{La fetch API}
+
+\begin{definizione}[fetch]
+Nell'ambiente browser, per effettuare richieste HTTP verso un server si usa la
+\textbf{fetch API}, che consta in sostanza di un'unica funzione:
+\begin{lstlisting}[language=JavaScript]
+fetch(url: string, init?: RequestInit): Promise<Response>
+
+interface RequestInit {
+  method?: string;
+  headers?: { [key: string]: string };
+  body?: string | null;
+}
+\end{lstlisting}
+\end{definizione}
+
+\begin{itemize}
+  \item \textbf{url}: la risorsa richiesta. Pu\`o essere \emph{esterna} (con dominio),
+        \emph{assoluta} o \emph{relativa}; per assolute/relative il dominio \`e quello di
+        provenienza; per le assolute il punto di partenza \`e la radice del dominio, per le
+        relative la location della pagina HTML in cui gira lo script.
+  \item \textbf{init} (opzionale): oggetto che rispetta \texttt{RequestInit}. Propriet\`a
+        pi\`u usate: \texttt{method} (default \texttt{"GET"}), \texttt{headers} (dizionario
+        chiave/valore con gli header HTTP), \texttt{body} (per i method che inviano dati,
+        POST su tutti; per i nostri scopi sempre una string). Per una GET spesso si omette
+        del tutto: i default vanno bene.
+\end{itemize}
+
+\subsection{AJAX e la storia della fetch}
+La fetch API sostituisce la precedente \textbf{XMLHTTPRequest}. La ``novit\`a'' (dal 2015)
+\`e che ingloba il paradigma \textbf{AJAX}: prima di AJAX, la risposta a una richiesta HTTP
+fatta da JavaScript veniva intercettata dal \emph{browser}, che la usava per visualizzare una
+nuova pagina (resettando l'ambiente di esecuzione). Con AJAX la risposta viene ricevuta
+\emph{dal programma stesso} tramite una callback: il programma pu\`o usare i dati per
+modificare il DOM \textbf{senza ricaricare la pagina}. Prima della fetch servivano librerie
+apposite per AJAX; la fetch lo include: una richiesta fatta con \texttt{fetch} torna sempre
+al programma che l'ha generata.
+\textbf{Axios} \`e una di quelle librerie pre-fetch, ancora usata per due ragioni: richieste
+un po' pi\`u semplici da formulare, e disponibilit\`a anche \emph{fuori} dall'ambiente
+browser (la fetch API \`e solo nel browser).
+
+\subsection{Perch\'e fetch non prende una callback?}
+\texttt{fetch} \`e \textbf{asincrona}: avvia la trasmissione e restituisce subito il
+controllo; l'arrivo della risposta (o del timeout) \`e un \emph{evento endogeno}. Il modo
+``classico'' sarebbe una callback fra i parametri -- ma nella stessa edizione di JavaScript
+\`e stata introdotta la \textbf{Promise API}: un meccanismo pi\`u sofisticato e meno
+suscettibile di errori per gestire gli eventi endogeni. Una operazione asincrona non
+restituisce un dato, ma \emph{la promessa di un dato che arriver\`a}. La Promise API \`e
+generica (per qualsiasi operazione asincrona); la fetch la sfrutta.
+
+\section{I problemi del meccanismo di callback}
+
+Esempio: una funzione \texttt{update} che (1) richiede una risorsa web, (2) all'arrivo la
+stampa e legge dati voluminosi da un DB, (3) all'arrivo dei dati aggiorna la visualizzazione.
+Due operazioni asincrone, ognuna con la sua callback; la seconda va avviata \emph{dentro} la
+callback della prima. Problemi:
+\begin{itemize}
+  \item \textbf{il codice \`e scritto ``a rovescio''} rispetto alle tempistiche reali: le
+        callback vanno definite prima di essere invocate, ma l'ordine di esecuzione \`e dato
+        dalle invocazioni, non dalle definizioni;
+  \item se il resto del programma deve sapere quando \texttt{update} termina, anche
+        \texttt{update} deve richiedere una callback\dots\ e far s\`i che riceva ``a cascata''
+        i risultati delle elaborazioni precedenti diventa rapidamente complicato;
+  \item ad ogni livello di indirezione \`e pi\`u difficile ricostruire la sequenza reale
+        delle operazioni (persino quando sono del tutto sequenziali): il codice si
+        \emph{disperde}, e in esecuzione non si sa pi\`u chi aveva chiamato la callback --
+        le conseguenze di un errore diventano quasi impossibili da tracciare all'indietro.
+\end{itemize}
+
+\section{Le Promise}
+
+\begin{definizione}[Promise]
+Una \textbf{Promise} \`e un oggetto che rappresenta \emph{l'esito} (ancora da venire, o
+gi\`a completato) di un'operazione asincrona. Con le Promise, una funzione asincrona
+restituisce subito il controllo \emph{restituendo un oggetto} \texttt{Promise<T>}
+(\`e un generic: \texttt{T} \`e il tipo del valore atteso al completamento). Il chiamante non
+delega la gestione del risultato alla funzione asincrona (come con le callback), ma
+\emph{aggancia} il proprio codice all'oggetto Promise. La sostanza non cambia: le Promise non
+rendono possibile nulla che prima non lo fosse -- rendono il codice pi\`u leggibile e fanno
+s\`i che l'ordine di scrittura sia il pi\`u possibile affine all'ordine di esecuzione.
+\end{definizione}
+
+\begin{importante}[I tre stati di una Promise]
+\begin{itemize}
+  \item \textbf{Pending}: operazione in corso; la Promise non \`e risolta, il risultato non
+        \`e disponibile. \emph{Tutte le Promise nascono pending}.
+  \item \textbf{Fulfilled}: operazione terminata con successo; la promessa \`e mantenuta,
+        il risultato \`e disponibile.
+  \item \textbf{Rejected}: operazione fallita; la promessa non pu\`o essere mantenuta, il
+        risultato non sar\`a mai disponibile; pu\`o essere disponibile un oggetto con le
+        informazioni sull'errore.
+\end{itemize}
+\end{importante}
+
+\subsection{then, catch, finally}
+A una Promise si \emph{aggancia} una funzione che viene eseguita quando lo stato passa da
+pending a fulfilled o rejected; il \emph{modo} in cui la si aggancia decide quando viene
+eseguita:
+\begin{itemize}
+  \item \texttt{p.then(fun)}: \texttt{fun} chiamata in caso di \textbf{successo}, col dato
+        ottenuto;
+  \item \texttt{p.catch(fun)}: chiamata in caso di \textbf{fallimento}, con l'oggetto errore;
+  \item \texttt{p.finally(fun)}: chiamata \textbf{in ogni caso}, all'uscita da pending.
+\end{itemize}
+Tutti e tre \textbf{restituiscono una nuova Promise}, il cui esito dipende dalla Promise
+originale e da ci\`o che accade nella funzione agganciata; l'oggetto ``promesso'' \`e quello
+restituito dalla funzione agganciata. Si creano cos\`i \emph{catene} di funzioni chiamate in
+successione; la Promise finale pu\`o essere restituita al chiamante, che vi attaccher\`a le
+proprie funzioni.
+
+\textbf{then in dettaglio.} Data \texttt{x: Promise<T>} e \texttt{y = x.then(fun)}:
+\begin{itemize}
+  \item \texttt{fun} pu\`o ricevere un parametro di tipo \texttt{T} (o nessuno); viene
+        chiamata solo se e quando \texttt{x} diventa fulfilled;
+  \item \texttt{y} \`e una \texttt{Promise<U>}, dove \texttt{U} \`e il tipo restituito da
+        \texttt{fun} (eventualmente \texttt{void}); \emph{caso particolare}: se \texttt{fun}
+        restituisce una \texttt{Promise<X>}, allora \texttt{y} \`e a sua volta
+        \texttt{Promise<X>} (``una promessa di una promessa \`e una promessa'');
+  \item se \texttt{x} ha successo, anche \texttt{y} diventa fulfilled (ma se \texttt{fun}
+        restituisce una terza Promise \texttt{z}, \texttt{y} segue successo/fallimento di
+        \texttt{z});
+  \item se \texttt{x} fallisce con errore \texttt{err}, anche \texttt{y} diventa rejected con
+        lo stesso \texttt{err}.
+\end{itemize}
+
+\textbf{catch in dettaglio.} \texttt{u = x.catch(fun)}: \texttt{fun} riceve l'errore (o
+nulla) e viene chiamata solo al passaggio a rejected; \texttt{u} segue le stesse regole di
+tipo del then. Se l'errore viene correttamente gestito, \texttt{u} pu\`o diventare fulfilled;
+se \texttt{fun} lancia (throw) un errore \texttt{err2}, \texttt{u} diventa rejected con
+\texttt{err2}. Di solito \emph{catch si concatena dopo then}.
+
+\textbf{finally in dettaglio.} \texttt{w = x.finally(fun)}: \texttt{fun} viene chiamata
+all'uscita dallo stato pending, con qualunque esito; \texttt{w} \`e una \texttt{Promise<T>}
+che si comporta come \texttt{x} (il risultato di \texttt{fun} viene ignorato), salvo che se
+\texttt{fun} lancia un errore o restituisce una Promise che fallisce, \texttt{w} fallisce.
+Anche finally permette di proseguire il concatenamento.
+
+\subsection{Combinare pi\`u operazioni asincrone}
+Date N operazioni asincrone \texttt{op1\dots opN}:
+\begin{itemize}
+  \item \textbf{Congiunzione} -- conclusa con successo solo se e quando \emph{tutte} le opI
+        terminano con successo:
+\begin{lstlisting}[language=JavaScript]
+const conj: Promise<[T1,T2,T3]> = Promise.all([p1, p2, p3])
+\end{lstlisting}
+        fulfilled quando p1, p2, p3 sono tutte fulfilled, con l'\emph{array dei risultati};
+        rejected \emph{non appena una} fallisce, con l'errore della prima fallita.
+  \item \textbf{Disgiunzione} -- conclusa con successo se e quando \emph{una} termina con
+        successo:
+\begin{lstlisting}[language=JavaScript]
+const disj: Promise<T1|T2|T3> = Promise.any([p1, p2, p3])
+\end{lstlisting}
+        fulfilled quando la \emph{prima} \`e fulfilled, col suo risultato; rejected se e
+        quando \emph{tutte} falliscono, con un \texttt{AggregateError} che raccoglie gli
+        errori.
+  \item \textbf{Competizione} (variante della disgiunzione) -- successo solo se una termina
+        con successo \emph{prima che un'altra fallisca}:
+\begin{lstlisting}[language=JavaScript]
+const comp: Promise<T1|T2|T3> = Promise.race([p1, p2, p3])
+\end{lstlisting}
+        si risolve quando la \emph{prima} si risolve, col medesimo esito della ``vincente''
+        (fulfilled se vince una fulfilled, rejected se vince una rejected).
+  \item \textbf{Concatenazione} -- op$_i$ inizia solo se e quando op$_{i-1}$ ha avuto
+        successo; successo complessivo = successo di opN. Si realizza con catene di then:
+\begin{lstlisting}[language=JavaScript]
+const chain: Promise<T3> = op1(...)
+  .then((d: T1) => op2(...))
+  .then((d: T2) => op3(...));
+\end{lstlisting}
+\end{itemize}
+
+\subsection{async / await}
+\begin{definizione}[async/await]
+Parole chiave che \emph{semplificano scrittura e leggibilit\`a} delle concatenazioni di
+Promise (non aggiungono funzionalit\`a: il codice \`e traducibile in catene di then).
+\begin{itemize}
+  \item \textbf{async} si applica alla definizione di una funzione/metodo che restituisce
+        una \texttt{Promise<T>}: abilita \texttt{await} nel corpo; al termine si pu\`o
+        restituire un \texttt{T}, incapsulato implicitamente in una Promise.
+  \item \textbf{await} si premette all'invocazione di una funzione che restituisce
+        \texttt{Promise<U>}: permette di trattarla come una normale funzione che restituisce
+        un \texttt{U}; \`e implicito che il codice successivo verr\`a eseguito solo alla
+        risoluzione della Promise.
+\end{itemize}
+\begin{lstlisting}[language=JavaScript]
+async function someFunction(): Promise<T3> {
+  const x1: T1 = await op1(...);
+  const x2: T2 = await op2(...);
+  const x3: T3 = await op3(...);
+  return x3;
+}
+\end{lstlisting}
+\end{definizione}
+
+\section{Il formato JSON}
+
+\begin{definizione}[JSON]
+Il formato \textbf{JSON} (JavaScript Object Notation) nasce in ambiente JavaScript per la
+\textbf{serializzazione} di oggetti, principalmente ai fini della trasmissione in una
+connessione HTTP. \emph{Serializzare} = rappresentare oggetti come stringhe (per salvarli su
+file o inviarli come body HTTP); l'operazione deve essere \emph{invertibile}
+(\emph{deserializzazione}: ricostruire l'oggetto dalla stringa). Una stringa JSON \`e
+costituita da un singolo \emph{valore JSON}, che pu\`o essere:
+\begin{itemize}
+  \item un \textbf{valore semplice}: number, string, boolean, \texttt{null};
+  \item un \textbf{array JSON}: valori separati da virgole fra quadre \texttt{[ ]};
+  \item un \textbf{oggetto JSON}: coppie \texttt{"chiave": valore} separate da virgole fra
+        graffe \texttt{\{ \}}, dove la chiave \`e una \emph{stringa fra virgolette}.
+\end{itemize}
+\end{definizione}
+
+Differenze dalla sintassi degli oggetti JavaScript: valori semplici pi\`u limitati (niente
+bigint, symbol, \texttt{undefined}); \emph{non si possono esprimere funzioni}; le chiavi
+vanno fra virgolette. Con l'evoluzione del web, JSON si \`e esteso alla rappresentazione di
+informazioni strutturate in generale (\texttt{tsconfig.json}, \texttt{package.json}) ed \`e
+oggi un formato di interscambio \textbf{language-independent}: anche i linguaggi server-side
+(Java, PHP, Python\dots) hanno librerie per serializzare/deserializzare JSON (il mondo Java
+tende storicamente a preferire XML per gli stessi scopi).
+
+\subsection{Serializzazione e deserializzazione}
+\begin{itemize}
+  \item \texttt{JSON.stringify(ogg)}: da oggetto/array/valore a stringa JSON. Esplora
+        l'oggetto \emph{ricorsivamente, in profondit\`a}. Pu\`o:
+        \begin{itemize}
+          \item \emph{ignorare} valori non serializzabili (undefined e funzioni non vengono
+                serializzati);
+          \item \emph{dare errore} se la struttura non \`e serializzabile, in particolare con
+                \textbf{riferimenti circolari} (es. albero in cui il padre riferisce i figli
+                e i figli il padre: loop infinito della serializzazione).
+        \end{itemize}
+        Quindi non tutti gli oggetti sono serializzabili, o la serializzazione pu\`o non
+        preservare tutte le informazioni. Applicata a oggetti di una classe,
+        \textbf{l'appartenenza alla classe si perde}: l'oggetto diventa a tutti gli effetti
+        un object literal.
+  \item \texttt{JSON.parse(str)}: da stringa a object literal / array / valore semplice.
+        L'oggetto \emph{non} pu\`o essere ``inserito d'ufficio'' in una classe (solo il
+        costruttore crea oggetti di una classe); ma se sappiamo che rispetta un'interface
+        possiamo tiparlo:
+        \texttt{const libro = JSON.parse(stringaDati) as Book}.
+\end{itemize}
+
+\subsection{JSON nelle richieste e risposte HTTP}
+\textbf{POST con body JSON} dall'app client-side:
+\begin{lstlisting}[language=JavaScript]
+fetch(someUrl, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(objectToSend)
+})
+\end{lstlisting}
+\textbf{Leggere il body di una Response}:
+\begin{lstlisting}[language=JavaScript]
+fetch(...)
+  .then((res: Response) => res.json())
+  .then((dati: MyExpectedDataType) => { /* usa i dati */ });
+\end{lstlisting}
+\begin{attenzione}
+Il body di una \texttt{Response} \textbf{non \`e una string} ma un
+\texttt{ReadableStream}: all'arrivo della risposta i dati potrebbero non essere ancora
+interamente pervenuti (si pensi a un video o un'immagine). Anche aspettando una JSON string
+che arriva in tempi brevi, bisogna chiamare \texttt{res.json()}, che restituisce una
+\emph{Promise} dell'oggetto contenuto nel body: mette in attesa che i dati siano interamente
+trasferiti e quindi deserializzati.
+\end{attenzione}
+
+\section{La server-side API}
+
+Una server-side app (per i nostri fini: risponde a richieste HTTP scambiando principalmente
+JSON) espone un accesso al \textbf{Data Model}, gestito pi\`u naturalmente lato server
+perch\'e \`e il server a poter rendere persistenti i dati (con un database); l'app
+server-side \`e la \emph{source of truth} del data model. (La persistenza lato client \`e
+possibile ma limitata al singolo utente su un singolo dispositivo.) App pi\`u complesse
+costruiscono sopra i dati una \emph{business logic} pi\`u articolata, con servizi ``live''
+che combinano i dati del DB con informazioni circostanziali o di terze parti.
+
+L'app client \emph{usa} le funzionalit\`a dell'app server; questa deve dichiarare la propria
+\textbf{API}, specificando per ogni funzionalit\`a: come si invoca, quali input richiede,
+quali sono gli effetti e gli output. Su HTTP:
+\begin{itemize}
+  \item \textbf{Qualificare la funzionalit\`a}: tramite il \textbf{pathname} della URL (ogni
+        funzionalit\`a su un pathname diverso; la sequenza di segmenti ``instrada'' -- si
+        parla di \textbf{route}) e il \textbf{method} (pi\`u funzionalit\`a sullo stesso
+        pathname purch\'e con method diverso). In linea di massima: \textbf{GET} per
+        funzionalit\`a che forniscono dati dal server al client, \textbf{POST} per quelle che
+        inseriscono nuovi dati nel Data Model (es. \texttt{GET /bookshelf/collections}
+        ottiene l'elenco delle raccolte, \texttt{POST /bookshelf/collections} ne aggiunge
+        una). \`E una semplificazione: nei casi che non vi rientrano si sceglie in base
+        all'input richiesto.
+  \item \textbf{Esprimere gli input}, con tre aspetti della richiesta:
+        \begin{itemize}
+          \item il \textbf{body} (solo POST, restringendoci a GET/POST): per input
+                ``corposi'' e strutturati (array, oggetti);
+          \item la \textbf{query string} (GET o POST): ogni coppia chiave/valore \`e un
+                input; pi\`u ``elegante'' per valori semplici o poco strutturati (anche se in
+                teoria qualsiasi cosa \`e codificabile come stringa);
+          \item la \textbf{route parametrica}: alcuni segmenti del pathname sono variabili e
+                corrispondono a un input -- es. \texttt{GET /bookshelf/books/:id}, invocata
+                come \texttt{/bookshelf/books/12}. Tipica per input che \emph{identificano
+                una risorsa} (id, nomi: la URL \`e un Resource Locator!); funziona per numeri
+                o brevi stringhe.
+        \end{itemize}
+  \item \textbf{Dichiarare effetti e risposta} (tramite documentazione): le modifiche al Data
+        Model in dipendenza degli input, e come sono fatti i risultati inviati nel body della
+        risposta.
+\end{itemize}

@@ -1,0 +1,325 @@
+\chapter{Spring e Spring Boot}
+
+\section{Il ruolo di Spring e di Spring Boot}
+
+\begin{definizione}[Spring]
+Ai fini del corso, il ruolo di \textbf{Spring} \`e evitare al programmatore la scrittura di
+\emph{boilerplate code} (codice ripetitivo di inizializzazione e gestione delle componenti di
+base, slegato dalla logica dell'applicazione). Lo sviluppatore realizza dei
+\textbf{request handler}, fornendo al framework informazioni su: \emph{a quali richieste
+HTTP} ciascun handler risponde (method/route) e \emph{quali dettagli della richiesta} gli
+servono (parametri della query string, body, segmenti parametrici). Il framework invoca
+l'handler corretto e gli fornisce le informazioni richieste. Gli handler sono raggruppati in
+classi dette \textbf{controller}; dentro Spring (lontano dagli occhi dello sviluppatore)
+ciascun controller corrisponde di fatto a una \emph{servlet} di Jakarta. Spring fornisce
+molto altro: ad esempio facilita enormemente l'accesso ai dati su DB.
+\end{definizione}
+
+\begin{definizione}[Spring Boot]
+La piattaforma Spring \`e molto versatile e configurabile finemente -- ed \`e proprio questa
+``laicit\`a'' a rendere complessa la configurazione dei progetti. \textbf{Spring Boot}
+estende Spring adottando un approccio ``dogmatico'' su alcune scelte architetturali:
+semplifica, velocizza e rende pi\`u efficiente lo sviluppo, a patto di essere compatibili con
+tali scelte. Punti principali:
+\begin{itemize}
+  \item \textbf{dependency starter}: pacchetti di dipendenze standard che evitano di
+        specificare una per una le librerie (si possono comunque aggiungere dipendenze
+        custom);
+  \item \textbf{Tomcat incapsulato}: Spring Boot include e gestisce internamente
+        un'installazione di Tomcat -- l'applicazione \`e di fatto \emph{stand-alone}, con
+        deploy molto semplificato (niente configurazione pre-esistente del server);
+  \item \textbf{configurazioni predefinite} per molte funzionalit\`a di Spring, adeguate alla
+        maggior parte dei casi.
+\end{itemize}
+\end{definizione}
+
+\subsection{App stand-alone e main class}
+Senza Spring Boot (solo Spring, o solo Jakarta) l'applicazione non avrebbe una ``main
+class'': sarebbe un insieme di classi istanziate dal Web Container o dall'ambiente Spring, e
+invocate quando serve. Per eseguirla bisognerebbe installare Tomcat, compilare e
+impacchettare (\emph{bundle}) i \texttt{.class}, effettuare il \emph{deploy} in Tomcat --
+tutto fortemente dipendente da S.O. e configurazione. Spring Boot lo evita: restano le
+``classi operative'' istanziate dall'ambiente Spring, ma c'\`e anche una \textbf{main class}
+che invoca le librerie di Spring perch\'e eseguano una versione \emph{embedded} di Tomcat con
+l'applicazione gi\`a rilasciata al suo interno -- basta un normale run:
+\begin{lstlisting}[style=java]
+@SpringBootApplication
+public class MyApplication {
+  public static void main(String[] args) {
+    SpringApplication.run(MyApplication.class, args);
+  }
+}
+\end{lstlisting}
+
+\subsection{Inizializzazione di progetto: SpringInitializr e Maven}
+Lo scheletro si genera con lo \textbf{SpringInitializr} (interfaccia web \texttt{start.spring.io}
+che produce uno zip; IntelliJ ha il generator ``Spring Boot'' integrato); come dipendenza di
+partenza si specifica \emph{Spring Web}. La gestione di progetto e dipendenze \`e affidata a
+\textbf{maven} (in alternativa gradle; maven \`e pi\`u lineare e semplice, sufficiente per i
+nostri scopi): la configurazione e le dipendenze stanno nel file \textbf{pom.xml}.
+Elementi salienti del pom: il \texttt{<parent>} (si eredita la configurazione di base da un
+pom genitore fornito da Spring Boot, \texttt{spring-boot-starter-parent}); le
+\texttt{<properties>} (es. \texttt{<java.version>17</java.version>}); le
+\texttt{<dependencies>}, che fanno riferimento ai pacchetti \emph{starter}
+(es. \texttt{spring-boot-starter-web}).
+I \textbf{dependency starter} sono ``pacchetti di dipendenze'' corrispondenti alle
+necessit\`a pi\`u comuni delle applicazioni enterprise, richiedibili in blocco dal pom.xml;
+sul repository di maven (\texttt{mvnrepository.com}) se ne pu\`o esaminare il contenuto.
+
+\subsection{Cenni al linguaggio XML}
+\begin{definizione}[XML]
+\textbf{XML} (eXtensible Markup Language) \`e un \emph{meta-linguaggio} di annotazione: non
+definisce quali tag usare (come HTML) ma permette di \emph{definire e usare i propri}.
+Un XML \`e \textbf{ben formato} se: i tag sono sequenze alfanumeriche fra parentesi angolari;
+a ogni \texttt{<nome>} corrisponde \texttt{</nome>}; un tag pu\`o chiudersi solo se tutti
+quelli aperti al suo interno sono chiusi (struttura ad albero); c'\`e un unico tag radice.
+XML struttura le informazioni esprimendone il significato: le rende parsificabili
+automaticamente e pi\`u leggibili per gli umani (si provi a togliere i tag dal pom.xml!).
+\end{definizione}
+Per uno scopo specifico si pu\`o definire l'insieme dei tag ammissibili e le loro relazioni:
+un \textbf{XML-Schema}. Un XML pu\`o riferirsi a uno schema nell'intestazione e risultare
+\emph{valido} o meno rispetto ad esso (ben formato $\neq$ valido). Il pom.xml riferisce lo
+schema maven-4.0.0.
+\emph{Nota}: HTML sarebbe quasi definibile con un XML-Schema; l'unico ostacolo sono i tag
+senza chiusura (\texttt{<img>}). L'HTML ottenuto imponendo la chiusura di tutti i tag \`e
+detto \textbf{XHTML}: ha convissuto con HTML, poi \`e stato soppiantato da \emph{HTML Living
+Standard}, dove i tag senza chiusura sono validi -- ne consegue che un HTML \emph{non} \`e un
+XML ben formato.
+
+\section{Le annotazioni Java}
+
+\begin{definizione}[Annotazioni]
+Le \textbf{annotazioni} sono il sistema con cui il programmatore fornisce \emph{metadati} su
+un elemento che sta dichiarando. Sintassi: \texttt{@Nome} (UpperCamelCase), eventualmente con
+coppie chiave-valore fra tonde: \texttt{@Ann("someinfo")},
+\texttt{@Ann(elem1="v1", elem2="v2")} (se c'\`e un solo valore, associato per convenzione
+alla chiave \texttt{value}, la chiave si pu\`o omettere). Si possono annotare classi, campi,
+metodi, parametri. Java ne definisce alcune predefinite; nuove annotazioni possono essere
+definite dagli sviluppatori (nel nostro caso arrivano dai package inclusi via pom.xml).
+\end{definizione}
+
+\begin{importante}
+Le annotazioni sono \textbf{puramente dichiarative}: non \emph{fanno} qualcosa, forniscono
+informazioni. I destinatari possibili:
+\begin{itemize}
+  \item \emph{altri sviluppatori} (segnalazioni, es. \texttt{@Deprecated});
+  \item \emph{il compilatore}, per verifiche (es. \texttt{@Override}: se il metodo non \`e
+        davvero un override, errore);
+  \item \emph{servizi runtime}, per attuare comportamenti sugli elementi annotati -- ed \`e
+        questo a renderle centrali in Jakarta e ancor pi\`u in Spring: il framework, grazie
+        alla \textbf{Java Reflection API}, legge le annotazioni su classi, metodi, parametri
+        e campi, e attraverso di esse capisce come, dove e quando utilizzarli, come invocarne
+        le funzionalit\`a e come dotarli di comportamenti aggiuntivi. L'uso delle annotazioni
+        in Spring si avvicina a una \emph{estensione del linguaggio}.
+\end{itemize}
+\end{importante}
+
+\section{Il pattern MVC in Spring}
+
+Spring struttura le applicazioni col pattern \textbf{Model--View--Controller} e definisce tre
+tipologie di componenti: \texttt{@Controller}, \texttt{@Service}, \texttt{@Repository}.
+\begin{itemize}
+  \item Il \textbf{controller} \`e il \emph{punto di ingresso}: riceve la richiesta HTTP e la
+        elabora, facendo da \emph{mediatore} fra una o pi\`u \emph{view} e gli aspetti
+        \emph{model} di sua pertinenza. \`E responsabile dell'\textbf{API}, che possiamo
+        vedere come la descrizione della view che il controller mette a disposizione.
+  \item La \textbf{view} qui ha un'accezione ampia: non (solo) una presentazione grafica, ma
+        un \emph{punto di vista sui dati} -- un insieme di oggetti JSON \`e a tutti gli
+        effetti una vista -- inclusi i modi messi a disposizione per richiederne
+        aggiornamenti. Ogni controller realizza una vista e la descrive tramite la sua API:
+        quali JSON restituisce a quali richieste, quali aggiornamenti offre, quali
+        informazioni servono per richiederli.
+  \item Il \textbf{model} contiene la \emph{business logic} e l'accesso ai dati (inclusa la
+        persistenza): conosce i dati, la loro strutturazione e i vincoli di coerenza, sa
+        organizzarli e aggiornarli. I dati in quanto tali sono nei componenti
+        \textbf{@Repository} (legati alla persistenza); i controller possono accedervi
+        cos\`i come sono (organizzazione DB-like) oppure tramite i \textbf{@Service} di
+        business logic, che aggregano e strutturano i dati, ne garantiscono la consistenza e
+        offrono operazioni di pi\`u alto livello.
+\end{itemize}
+
+\section{Inversion of Control e Dependency Injection}
+
+\begin{definizione}[IoC e DI]
+Con il \textbf{controllo diretto}, se al componente X servono i servizi di Y \`e
+responsabilit\`a dello sviluppatore creare un'istanza di Y e passarla a X. Con
+l'\textbf{inversion of control} (controllo rovesciato) esiste un \emph{framework} che
+mantiene tutti i ``servizi'' e li fornisce a chi dichiara di necessitarne; il framework
+pu\`o anche esporre \emph{versioni astratte} dei servizi, fornendo implementazioni diverse a
+seconda del contesto, cambiandole senza scossoni per chi le usa, o fornendo versioni
+\emph{mock} per il testing. L'IoC \`e spesso realizzato tramite la
+\textbf{dependency injection}: il componente che vuole usare certi servizi \emph{lo
+dichiara}, ad esempio specificandoli come parametri del proprio \emph{costruttore}; poich\'e
+\`e il framework a costruire il componente, al momento della creazione gli ``inietta'' le
+istanze appropriate (gi\`a create in precedenza). Risultato: minore accoppiamento fra
+utilizzatore e fornitore di un servizio.
+\end{definizione}
+
+\section{L'architettura di Spring: IoC container e bean}
+
+\begin{definizione}[Bean e IoC container]
+Spring \`e un ambiente di esecuzione \emph{modulare} al cui centro sta
+l'\textbf{IoC container}, che crea e gestisce oggetti chiamati \textbf{bean}: oggetti in
+esecuzione che assolvono alle funzionalit\`a richieste da un modulo Spring. Due
+caratteristiche distintive:
+\begin{itemize}
+  \item i bean sono tutti \textbf{singleton}: esiste sempre un solo bean di una data classe
+        (per questo si indica un bean con la sua classe); crearne due risulterebbe in
+        un'eccezione;
+  \item l'IoC container sa \textbf{iniettare} un bean (passarlo come parametro) agli altri
+        bean che ne fanno richiesta.
+\end{itemize}
+Esempi: un \texttt{@RestController} \`e un bean usato da Spring per rispondere alle richieste
+su certe route; un \texttt{@Service} \`e un bean usato non da Spring ma dai controller o da
+altri service; altri bean predefiniti gestiscono aspetti come l'invio di un
+\texttt{500 Internal Server Error} se il nostro codice genera un errore.
+\end{definizione}
+
+Tutti i bean vengono creati dall'IoC container \emph{all'avvio dell'applicazione},
+rispettando le dipendenze dichiarate (via dependency injection); \textbf{circoli viziosi di
+dipendenze} (A dipende da B che dipende da C che dipende da A) generano un'eccezione.
+Due modi principali di dichiarare un bean:
+\begin{itemize}
+  \item annotare una classe con \textbf{@Component} o una delle annotazioni \emph{derivate}
+        (\texttt{@RestController}, \texttt{@Service}, \texttt{@Repository},
+        \texttt{@Configuration}\dots): l'IoC container ne crea una singola istanza all'avvio;
+        i parametri del costruttore stabiliscono le dipendenze da altri bean, creati prima e
+        poi passati al costruttore (DI \emph{a livello di costruttore}). Vale anche per
+        classi che estendono classi-bean gi\`a definite nelle librerie;
+  \item annotare una classe con \textbf{@Configuration} e uno o pi\`u metodi con
+        \textbf{@Bean}: il container interpreta ``il metodo crea/restituisce un bean'', lo
+        esegue all'inizializzazione e inserisce l'oggetto fra i bean disponibili; le
+        dipendenze si dichiarano fra i \emph{parametri del metodo} (DI \emph{a livello di
+        metodo}).
+\end{itemize}
+
+\textbf{Il ruolo dei moduli.} Un modulo Spring (Spring Web, JPA, Spring Security\dots) \`e un
+insieme di package che estende Spring:
+\begin{itemize}
+  \item fornendo \emph{bean infrastrutturali} con comportamenti di base -- es. Spring Web
+        offre il bean \textbf{DispatcherServlet} che ascolta le richieste HTTP e le redirige
+        ai @RestController e agli handler appropriati (o restituisce 404), e questo bean
+        esiste indipendentemente dal fatto che definiamo dei controller;
+  \item fornendo \emph{bean di configurazione} che influenzano quelli infrastrutturali --
+        es. i bean responsabili dell'interpretazione dei body delle richieste e della
+        serializzazione dei body delle risposte;
+  \item fornendo \emph{insiemi di annotazioni} per estendere il comportamento di base con i
+        propri bean e farli comunicare con gli altri (\texttt{@RestController},
+        \texttt{@GetMapping}, \texttt{@PathVariable}\dots).
+\end{itemize}
+\textbf{Programmare in Spring} significa quindi: scrivere i propri bean che interagiscono con
+quelli esistenti tramite le annotazioni dei moduli importati; modificare (estendendoli,
+ridefinendoli o configurandoli) i bean di configurazione per ottenere il comportamento
+desiderato.
+
+\section{Il @RestController: rispondere alle richieste HTTP}
+
+\begin{definizione}[Controller e request handler]
+Un \textbf{controller} \`e una classe annotata \texttt{@RestController}; un
+\textbf{request handler} \`e un metodo di un controller annotato con
+\texttt{@RequestMapping} o con uno degli \emph{shortcut} \texttt{@GetMapping},
+\texttt{@PostMapping}, \dots
+\end{definizione}
+
+\texttt{@RequestMapping} e gli shortcut ammettono propriet\`a per \emph{filtrare} le
+richieste:
+\begin{itemize}
+  \item \texttt{value}: un pathname (String) o un insieme di pathname (array);
+  \item \texttt{method}: il method della richiesta (\texttt{RequestMethod.GET},
+        \texttt{RequestMethod.POST}, \dots); gli shortcut non lo ammettono perch\'e \`e
+        gi\`a implicito (\texttt{@GetMapping} $\equiv$
+        \texttt{@RequestMapping(method=RequestMethod.GET)});
+  \item \texttt{params}: query param che la richiesta deve avere, eventualmente vincolati nel
+        valore (\texttt{"param=value"});
+  \item \texttt{headers}: header richiesti, anche qui vincolabili (\texttt{"header=value"}).
+\end{itemize}
+\texttt{@RequestMapping} si pu\`o applicare anche \emph{all'intera classe} controller: quel
+pathname diventa il \emph{prefisso} dei pathname dei singoli handler.
+
+\subsection{ResponseEntity<T>: inviare risposte JSON}
+La classe \textbf{ResponseEntity} permette agli handler di restituire oggetti attorno a cui
+Spring confeziona una risposta HTTP, di default di tipo \texttt{application/json}. Metodi
+statici di convenienza:
+\begin{itemize}
+  \item \texttt{ResponseEntity.ok(data)}: status 200, body = \texttt{data};
+  \item \texttt{ResponseEntity.notFound().build()}: status 404. Serve \texttt{build()}
+        perch\'e \texttt{notFound} restituisce una risposta \emph{parziale}, ancora
+        configurabile (a differenza di \texttt{ok}, che \`e gi\`a compiuta);
+  \item \texttt{ResponseEntity.status(200).headers(httpHeaders).body(data)}: come ok, ma
+        configurando gli header con un oggetto \texttt{HttpHeaders} (coppie
+        propriet\`a/valore).
+\end{itemize}
+\begin{attenzione}
+Spring determina quali campi di un oggetto serializzare/deserializzare a partire dai
+\textbf{getter pubblici} della classe (indipendentemente dalla presenza dei setter).
+\end{attenzione}
+
+\subsection{Ricevere le propriet\`a della richiesta}
+Un request handler specifica \emph{come parametri del metodo} le propriet\`a della richiesta
+che vuole conoscere, comunicando a Spring la corrispondenza tramite annotazioni:
+\begin{itemize}
+  \item \textbf{@RequestParam}: un parametro della \emph{query string}; se il nome coincide
+        col parametro formale non serve altro; \texttt{@RequestParam(name="parName")} per
+        nomi diversi; \texttt{@RequestParam(required=false)} se pu\`o essere assente;
+  \item \textbf{@PathVariable}: un \emph{segmento parametrico} del path, indicato nel
+        pathname del mapping fra graffe \texttt{\{ \}} con un nome che deve coincidere col
+        parametro formale;
+  \item \textbf{@RequestBody}: il \emph{body} della richiesta; il parametro formale deve
+        essere del tipo corretto per la deserializzazione della JSON string;
+  \item \textbf{@RequestHeader(HttpHeaders.HEADER)}: il valore dell'header specificato
+        (\texttt{HttpHeaders} definisce costanti coi nomi degli header HTTP).
+\end{itemize}
+
+\section{I @Service: business logic}
+
+Un servizio di business logic \`e una classe annotata \textbf{@Service}. Spring ne crea
+\emph{una e una sola istanza}; la classe pu\`o essere fatta come si ritiene opportuno (i
+principi sono quelli della buona OOP pi\`u che di Spring): l'idea \`e offrire un insieme
+\emph{coeso e coerente} di funzionalit\`a che compone, con altri service e con i repository,
+la business logic. Per usare un service dentro un altro componente (controller, altro
+service, repository) si usa la \textbf{dependency injection}, nella forma pi\`u comune:
+prevedere il service come \emph{parametro del costruttore} del ricevente, il cui codice lo
+memorizza in un campo. I costruttori di service/controller/repository possono prendere
+parametri \emph{purch\'e iniettabili} (altri bean), e senza dipendenze circolari.
+
+\subsection{Suddivisione delle responsabilit\`a}
+\begin{importante}[Chi fa cosa]
+\begin{itemize}
+  \item I \textbf{@RestController} gestiscono le richieste HTTP: scelgono, in base a
+        parametri (@PathVariable, @RequestParam), @RequestBody e altre caratteristiche, quali
+        funzionalit\`a di business logic attivare; decidono, in base alla risposta ottenuta,
+        che tipo di risposta HTTP inviare e quali dati ne costituiranno il body. In sostanza:
+        \emph{garantiscono che l'API sia quella concordata con l'app client-side}.
+  \item I \textbf{@Service} attuano la business logic -- le vere funzionalit\`a dell'app.
+        Servono i controller ma anche \emph{l'un l'altro}; frequentemente operano I/O sullo
+        strato di persistenza usando i @Repository, talvolta ``cucendo insieme'' pi\`u
+        richieste a pi\`u repository per una funzionalit\`a complessa.
+  \item I \textbf{@Repository} garantiscono la corretta \emph{persistenza} dei dati loro
+        affidati: ognuno gestisce una entit\`a ben precisa; non sanno nulla della business
+        logic n\'e dell'API -- conoscono solo la tabella a cui fanno riferimento.
+\end{itemize}
+\end{importante}
+
+\section{Entity e Data Transfer Object}
+
+La rappresentazione delle entit\`a nella \emph{persistenza} (le @Entity e i @Repository di
+JPA) \`e usata dalla business logic di back-end, ma \textbf{non \`e (quasi mai) la stessa
+usata nella comunicazione col front-end} -- e non si dovrebbe ipotizzare che lo sia. Motivi:
+\begin{itemize}
+  \item a volte back-end e front-end hanno proprio una \emph{visione diversa} del modello;
+  \item a volte il back-end \emph{non vuole esporre} il modello cos\`i com'\`e (si pensi alla
+        password dell'oggetto User!);
+  \item le @Entity sono spesso collegate fra loro (@OneToMany, @ManyToMany\dots): oggetti
+        molto ``ricchi'', con collegamenti che si collegano ad altri collegamenti; verso il
+        front-end si vuole spesso una versione pi\`u \emph{shallow}, riservandosi di mandare
+        altri dati su richiesta;
+  \item viceversa, a volte si vogliono \emph{aggregare} pi\`u @Entity in un unico oggetto con
+        i soli aspetti che interessano al front-end.
+\end{itemize}
+\begin{definizione}[DTO]
+Le classi che rappresentano la ``visione'' sulle entit\`a da trasferire al front-end sono i
+\textbf{Data Transfer Object}; \`e in generale opportuno definire i propri. La
+responsabilit\`a della conversione Entity $\leftrightarrow$ DTO \`e del \emph{Controller};
+la prassi pi\`u comune \`e definire una classe \textbf{DTOMapper} con i metodi di
+conversione, a cui il controller si appoggia.
+\end{definizione}

@@ -1,0 +1,208 @@
+\chapter{CORS, sessioni, filtri e autenticazione}
+
+\section{Cross-Origin Resource Sharing (CORS)}
+
+\begin{definizione}[Origine e CORS]
+L'\textbf{origine} di un'applicazione client-side \`e il server HTTP che l'ha fornita.
+Si parla di \textbf{cross-origin resource sharing} quando un'app client-side vuole effettuare
+una fetch da una app server-side che risiede su un'\emph{origine diversa}.
+\end{definizione}
+
+\subsection{La preflight request}
+Quando si verifica una richiesta cross-origin, il browser -- \emph{prima} di far partire la
+fetch vera e propria -- effettua una richiesta detta \textbf{preflight}, con method HTTP
+\textbf{OPTIONS}: un test preliminare per capire se la richiesta effettiva potr\`a essere
+recepita dal server. Nella preflight il browser descrive la richiesta che vorrebbe fare con
+tre header:
+\begin{itemize}
+  \item \texttt{Access-Control-Request-Method}: quale sar\`a il method;
+  \item \texttt{Origin}: l'origine dell'app client-side;
+  \item \texttt{Access-Control-Request-Headers}: gli header della richiesta che verr\`a
+        effettuata.
+\end{itemize}
+Il server risponde alla preflight dichiarando i propri vincoli con gli header:
+\begin{itemize}
+  \item \texttt{Access-Control-Allow-Methods}: i method permessi;
+  \item \texttt{Access-Control-Allow-Headers}: gli header permessi;
+  \item \texttt{Access-Control-Allow-Origin}: le origini permesse;
+  \item \texttt{Access-Control-Allow-Credentials}: se \`e permesso l'invio di credenziali
+        (essenzialmente i cookie di sessione).
+\end{itemize}
+Il browser cos\`i sa se la richiesta verr\`a accettata e quali header dovr\`a inserire.
+\textbf{Se la preflight viene respinta, \`e il browser stesso a bloccare la richiesta
+originale}; se la mandasse avanti, sarebbe l'app server-side a rispondere con un errore
+(es. \texttt{405 Method Not Allowed} o \texttt{403 Forbidden} a seconda della violazione).
+
+\subsection{@CrossOrigin}
+Per default i server HTTP \textbf{bloccano} le richieste cross-origin (politica
+\emph{noCORS}). \`E un problema in fase di sviluppo, quando abbiamo \emph{due} server HTTP
+(uno serve l'app client-side, l'altro \`e embedded nell'app server-side): anche sullo stesso
+host (localhost) girano su \emph{porte diverse} $\Rightarrow$ origini diverse.
+
+\textbf{Approccio semplificato} (da usare \emph{solo in sviluppo su localhost}): annotare con
+\textbf{@CrossOrigin} i controller (o i singoli handler) per cui permettere le richieste
+cross-origin -- in sviluppo, tipicamente tutti. Effetto: quando la richiesta \`e diretta a
+uno dei nostri controller viene permessa \emph{indipendentemente} da origine, method e
+header -- una sorta di ``salvacondotto universale''. Solo l'invio di \textbf{credenziali}
+resta bloccato. (Le richieste che non corrispondono a nessun handler restano soggette a
+noCORS: vengono bloccate in preflight prima ancora di stabilire se sono valide.)
+
+\section{Le sessioni}
+
+\begin{esamebox}
+\emph{``Spiegare perch\'e nelle applicazioni server-side \`e importante il concetto di
+`sessione' e come esso viene implementato tramite i cookie.''}
+\end{esamebox}
+
+\begin{definizione}[Sessione]
+Quando c'\`e un'interazione prolungata fra due ``parti'' (utente e applicazione, client e
+server, applicazioni peer-to-peer) diventa rilevante il concetto di \textbf{sessione}:
+l'idea che la ``conversazione'' abbia \emph{uno stato e uno storico}, cos\`i che a ogni passo
+si possa fare riferimento a quanto gi\`a detto e fatto, senza ripetere o ricapitolare.
+\end{definizione}
+
+\begin{importante}[Perch\'e serve uno stratagemma]
+Il problema nasce da due ragioni:
+\begin{enumerate}
+  \item il protocollo HTTP \`e di per s\'e \textbf{stateless}: non prevede alcuna idea di
+        stato dello scambio -- ogni transazione (richiesta + risposta) \`e indipendente
+        dalle altre; l'unico modo di ``simulare'' uno stato sarebbe riportare a ogni passo
+        tutte le informazioni rilevanti gi\`a scambiate;
+  \item un server HTTP gestisce \textbf{molte conversazioni con client diversi}: se il client
+        non si rende riconoscibile, il server non pu\`o sapere ``a che punto'' della
+        conversazione si trova, perch\'e \`e in punti diversi a seconda dell'interlocutore.
+\end{enumerate}
+Serve quindi ``costruire'' \emph{sopra} HTTP un meccanismo che permetta a client e server di
+sapere che stanno avendo una conversazione prolungata e di mantenerne lo stato.
+\end{importante}
+
+\subsection{Sessioni tramite cookie}
+\begin{definizione}[Cookie]
+Un \textbf{cookie} \`e un blocco di dati che il server manda al client \emph{nel primo
+scambio} della loro conversazione; a ogni scambio successivo, il client \emph{aggiunge il
+cookie alla propria richiesta}, cos\`i il server identifica il particolare ``thread'' di
+conversazione con quel client.
+\end{definizione}
+Il server \emph{potrebbe} memorizzare le informazioni direttamente nel cookie; di solito
+per\`o nel cookie si mettono solo le informazioni per \emph{riconoscere l'utente e
+identificare univocamente la conversazione} (un id di sessione), mentre \textbf{lo stato vero
+e proprio resta sul server} (in memoria o nel DB), indicizzato da quell'id: cos\`i si evita
+di appesantire richieste e risposte HTTP.
+
+\subsection{Gestione della sessione in Spring Boot}
+Per attivare i cookie di sessione si configura \texttt{application.properties}:
+\begin{lstlisting}
+server.servlet.session.cookie.name=LAB_SESSION_COOKIE
+server.servlet.session.cookie.http-only=true
+server.servlet.session.cookie.secure=true
+\end{lstlisting}
+\begin{itemize}
+  \item il \emph{nome} identifica il cookie (visibile negli strumenti di sviluppo del
+        browser);
+  \item \textbf{http-only}: il browser e il codice client-side \emph{non hanno accesso} ai
+        contenuti del cookie;
+  \item \textbf{secure}: il cookie viene trasmesso \emph{cifrato}.
+\end{itemize}
+Per lavorare con la sessione si \emph{inietta nei request handler} l'oggetto
+\textbf{HttpSession}, tramite cui:
+\begin{itemize}
+  \item scrivere: \texttt{session.setAttribute(key, value)};
+  \item leggere: \texttt{session.getAttribute(key)};
+  \item invalidare (anche prima del timeout): \texttt{session.invalidate()};
+  \item impostare il timeout: \texttt{session.setMaxInactiveInterval(secs)} -- il timeout
+        indica per quanto tempo il cookie pu\`o restare \emph{inutilizzato} (nessuna nuova
+        richiesta con quel cookie); scaduto, il cookie non \`e pi\`u valido e dovr\`a
+        essere generato uno nuovo.
+\end{itemize}
+
+\subsection{La collaborazione del client (e il CORS con credenziali)}
+Perch\'e il meccanismo funzioni, l'app client-side deve \emph{rimandare il cookie a ogni
+richiesta}. \`E il comportamento di default del browser \textbf{solo per richieste
+same-origin}: in situazione \emph{cross-origin}, per default le credenziali \emph{non}
+vengono inviate. Per ottenerne l'invio, nelle opzioni della fetch si specifica:
+\begin{lstlisting}[language=JavaScript]
+credentials: "include"      // default: "same-origin"
+\end{lstlisting}
+Lato server, per\`o, \texttt{@CrossOrigin} cos\`i com'\`e non basta pi\`u:
+\begin{enumerate}
+  \item la risposta alla preflight deve includere
+        \texttt{Access-Control-Allow-Credentials: true} $\Rightarrow$
+        \texttt{@CrossOrigin(allowCredentials = "true")};
+  \item per ragioni di sicurezza, \textbf{se le credenziali sono ammesse il protocollo HTTP
+        impedisce di abilitare tutte le origini in modo acritico}: l'impostazione di default
+        (\texttt{Allow-Origin: qualsiasi}) non \`e pi\`u valida -- vanno \emph{elencate
+        esplicitamente} le origini ammesse (una \textbf{whitelist}):
+\end{enumerate}
+\begin{lstlisting}[style=java]
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+\end{lstlisting}
+
+\section{I filtri}
+
+\begin{definizione}[Filtro]
+Un \textbf{filtro} in Spring Boot/Jakarta \`e una funzione attraverso cui passano le
+richieste HTTP \emph{prima} di giungere ai request handler: viene chiamata per \emph{ogni}
+richiesta, e pu\`o decidere se \emph{inoltrarla} nella \textbf{filter chain} (la catena di
+filtri, che culmina nell'invocazione dell'handler) oppure \emph{respingerla} con uno status
+code di errore. Uso tipico: verificare che la richiesta soddisfi dei requisiti.
+\end{definizione}
+
+Un filtro \`e una classe che \textbf{implementa l'interfaccia \texttt{Filter}} ed \`e
+annotata \textbf{@Component}: cos\`i Spring Boot lo include nella filter chain (che
+comprende anche filtri gi\`a presenti nel framework). L'ordine di esecuzione si controlla
+con \textbf{@Order(N)}.
+\begin{lstlisting}[style=java]
+@Component
+@Order(1)
+public class AuthFilter implements Filter {
+  @Override
+  public void doFilter(ServletRequest servletRequest,
+                       ServletResponse servletResponse,
+                       FilterChain filterChain)
+                       throws IOException, ServletException {
+    HttpServletRequest request = (HttpServletRequest) servletRequest;
+    HttpServletResponse res = (HttpServletResponse) servletResponse;
+    ...
+    filterChain.doFilter(servletRequest, servletResponse); // inoltro
+    ...
+    res.sendError(HttpServletResponse.SC_FORBIDDEN);       // blocco
+  }
+}
+\end{lstlisting}
+I parametri di \texttt{doFilter}:
+\begin{itemize}
+  \item \texttt{ServletRequest}: la richiesta nella sua forma ``grezza'', prima che Spring la
+        elabori; rappresenta una generica richiesta di rete -- per le informazioni specifiche
+        HTTP serve il \emph{type casting} a \texttt{HttpServletRequest};
+  \item \texttt{ServletResponse}: la risposta ``grezza'', in cui Spring inserir\`a le
+        informazioni degli handler; anche qui casting a \texttt{HttpServletResponse};
+  \item \texttt{FilterChain}: la catena a cui inoltrare i due oggetti, per passare il
+        testimone al prossimo filtro o, se i filtri sono finiti, all'handler.
+\end{itemize}
+Per \textbf{inoltrare}: \texttt{filterChain.doFilter(request, response)}. Per
+\textbf{bloccare}: non si invoca la chain e si usa la response per inviare un errore:
+\texttt{response.sendError(HttpServletResponse.SC\_XXX)}.
+
+\section{Basic Authentication con filtri e sessioni}
+
+Con filtri e sessioni si pu\`o ``cucinare'' un meccanismo di \textbf{autenticazione di
+base}. Versione semplificata (e per nulla sicura): username e password viaggiano \emph{in
+chiaro come query parameters}; una versione un po' pi\`u sicura li mette nel \emph{body} di
+una POST e usa \textbf{HTTPS}.
+
+Schema:
+\begin{itemize}
+  \item si distingue un utente autenticato da uno non autenticato tramite un
+        \textbf{attributo salvato in sessione} (es. lo username);
+  \item per una generica richiesta, \textbf{il filtro verifica se la sessione contiene
+        l'attributo}: se s\`i, la fa passare; altrimenti risponde
+        \texttt{401 UNAUTHORIZED};
+  \item \textbf{eccezione: la richiesta di login}, che deve passare in ogni caso. Arriva al
+        request handler, che (tramite un opportuno @Service) verifica le credenziali: se
+        corrette, crea in sessione l'attributo che segnala l'autenticazione; altrimenti
+        risponde \texttt{401 UNAUTHORIZED};
+  \item il \textbf{logout} si realizza semplicemente \emph{invalidando la sessione};
+  \item il server deve esporre anche una route, accessibile pure ai non autenticati, che
+        permetta all'app client-side di \emph{verificare lo stato corrente
+        dell'autenticazione}.
+\end{itemize}

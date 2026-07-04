@@ -1,0 +1,272 @@
+\chapter{Il front-end: CSS}
+
+\section{Le regole di stile}
+
+\begin{definizione}[Regola CSS]
+Lo stile grafico di un documento HTML \`e descritto da \textbf{regole} raccolte in file
+\texttt{.css}. Una regola \`e composta da un \textbf{selettore} (filtra gli elementi a cui
+la regola si applica) e da un \textbf{blocco di dichiarazioni} fra graffe; ogni
+\textbf{dichiarazione} \`e della forma \texttt{propriet\`a: valore;}.
+\begin{lstlisting}[language=HTMLCSS]
+h1 {
+  background-color: darkslategrey;
+  color: bisque;
+  padding: 10px;
+  font-family: sans-serif;
+}
+\end{lstlisting}
+La specifica CSS definisce un lunghissimo elenco di propriet\`a (e per ognuna i tipi di
+valori ammessi).
+\end{definizione}
+
+\subsection{Assegnare regole di stile a un HTML}
+\begin{itemize}
+  \item \textbf{Foglio esterno}: documento separato, collegato nello HEAD con
+        \texttt{<link rel="stylesheet" href="styles/style.css">}.
+  \item \textbf{Foglio interno}: regole scritte nello HEAD dentro un elemento
+        \texttt{<style>\dots</style>}.
+  \item \textbf{Stile in linea}: dichiarazioni associate a un singolo elemento tramite
+        l'attributo \texttt{style}, es.
+        \texttt{<h1 style="color: red; font-size: 15pt;">}.
+\end{itemize}
+
+\subsection{Regole a cascata}
+Cosa succede se a uno stesso elemento si applicano regole con impostazioni contrastanti
+(stessa propriet\`a, valori diversi)? Tre meccanismi:
+\begin{itemize}
+  \item \textbf{Cascata}: conta l'\emph{ordine} in cui il browser riceve le regole -- a
+        parit\`a di specificit\`a vince quella definita \emph{per ultima}. Conta l'ordine dei
+        fogli esterni; i fogli interni vengono dopo gli esterni; le dichiarazioni in linea
+        per ultime.
+  \item \textbf{Specificit\`a}: quanto \emph{precisamente} il selettore individua l'elemento
+        (calcolata con un algoritmo di cui non vediamo i dettagli). Le dichiarazioni pi\`u
+        specifiche in assoluto sono quelle \emph{in linea}.
+  \item \textbf{Ereditariet\`a}: alcune propriet\`a vengono ereditate di default dal
+        genitore, o i loro valori sono calcolati a partire da esso. Non influenza l'algoritmo
+        di scelta, ma ha effetto sul risultato -- da tenere presente quando i CSS ``non si
+        comportano come vorremmo''.
+\end{itemize}
+
+\section{Propriet\`a e valori}
+
+Due macro-famiglie di propriet\`a molto usate:
+\begin{itemize}
+  \item \textbf{tipografiche} (caratteri e testo): \texttt{font-size}, \texttt{font-family},
+        \texttt{font-weight}, \texttt{font-style}, \texttt{text-decoration},
+        \texttt{line-height}, \texttt{color}\dots
+  \item \textbf{del riquadro} (box) che delimita l'elemento: \texttt{width}, \texttt{height},
+        \texttt{max-/min-width}, \texttt{max-/min-height}, \texttt{padding},
+        \texttt{margin}, \texttt{border}, \texttt{border-radius},
+        \texttt{background-color}, \texttt{position}, \texttt{top/left/bottom/right}\dots
+        (la libert\`a effettiva dipende dalla modalit\`a di \emph{display}: alcune
+        dispongono i riquadri con un algoritmo e ignorano in tutto o in parte queste
+        indicazioni).
+\end{itemize}
+Riferimenti completi: MDN (\texttt{developer.mozilla.org}) e W3Schools.
+
+\subsection{Tipi di valori}
+\begin{itemize}
+  \item \textbf{Valori predefiniti} (costanti, tipo enumerativo):
+        \texttt{font-weight: bold;} \texttt{border: solid;} \texttt{color: red;}
+        \texttt{margin: auto;}
+  \item \textbf{Valori metrici}: numero + unit\`a di misura. Unit\`a \emph{assolute}
+        (\texttt{px}, \texttt{mm}, \texttt{in}, \texttt{pt}\dots) o \emph{relative}, in
+        proporzione a dimensioni dell'elemento radice o del contenitore:
+        \texttt{font-size: 2rem;} (doppio della dimensione carattere della radice),
+        \texttt{width: 50\%;} (met\`a del contenitore), \texttt{max-width: 50vw;}\dots
+  \item \textbf{Colori}: RGB o RGB$\alpha$: \texttt{\#dfff76},
+        \texttt{rgb(255,0,106)}, \texttt{rgba(255,0,106,0.1)}.
+\end{itemize}
+
+\subsection{Propriet\`a composite}
+Alcune propriet\`a sono scorciatoie per impostarne pi\`u d'una insieme. Esempio con i margini:
+\begin{lstlisting}[language=HTMLCSS]
+margin: 5px 10px 0 20px;  /* top - right - bottom - left */
+margin: 10px;             /* tutti e 4 uguali */
+margin: 10px 20px;        /* verticali - orizzontali */
+\end{lstlisting}
+
+\section{I selettori}
+
+I selettori sono vere e proprie \emph{query sul documento HTML}: \`e la loro flessibilit\`a a
+rendere potente il CSS. Si dividono in semplici, compositi e complessi.
+
+\subsection{Selettori semplici}
+\begin{itemize}
+  \item \textbf{per TAG}: coincide con un tag HTML, seleziona tutti gli elementi di quel tipo.
+        Es. \texttt{img \{\dots\}}
+  \item \textbf{per CLASSE} (la categoria pi\`u usata): la classe si assegna con l'attributo
+        \texttt{class}; le classi sono stringhe libere che \emph{etichettano} gli elementi
+        per raggrupparli e selezionarli (nei CSS e in JavaScript). Selettore: punto + nome,
+        es. \texttt{.articolo \{\dots\}}
+  \item \textbf{per ID}: id univoco assegnato con l'attributo \texttt{id}; selettore:
+        \texttt{\#} + id, es. \texttt{\#utente}. Meno usati delle classi, soprattutto per la
+        difficolt\`a di garantirne l'univocit\`a.
+  \item \textbf{per ATTRIBUTO}, fra parentesi quadre: \texttt{[attr]} (elementi che dichiarano
+        \texttt{attr}, con qualunque valore) oppure \texttt{[attr OP "val"]}, dove il
+        significato di ``corrispondere'' dipende dall'operatore: \texttt{[attr="val"]}
+        uguaglianza esatta, \texttt{[attr*="text"]} il valore \emph{contiene} la stringa.
+  \item \textbf{per PSEUDOCLASSE}: raggruppamenti predefiniti determinati dal browser in base
+        allo \emph{stato} dell'elemento, dinamico (\texttt{:hover} -- mouse sopra) o statico
+        (\texttt{:first-child} -- primo figlio). Selettore: due punti + nome.
+  \item \textbf{UNIVERSALE}: \texttt{*}, seleziona tutti gli elementi.
+\end{itemize}
+
+\subsection{Selettori compositi}
+Si ottengono \emph{giustapponendo} (senza spazi) pi\`u selettori semplici; l'effetto \`e un
+\textbf{AND}: sono selezionati gli elementi che rispettano \emph{tutti} i selettori.
+Vincoli: al pi\`u \emph{un} selettore per tag (o l'universale), e se presente deve essere il
+\emph{primo} della composizione (l'universale come primo pu\`o anche essere omesso).
+L'ordine non cambia il significato, ma pu\`o influire sulla specificit\`a.
+\begin{esempio}
+\texttt{div.importante} = tutti i DIV di classe \texttt{importante};
+\texttt{label[name="anno"]} = tutte le LABEL con \texttt{name} pari ad ``anno'';
+\texttt{.elenco.attivo} = elementi (di qualsiasi tipo) con entrambe le classi;
+\texttt{input[type="button"]:hover} = i pulsanti, ma solo al passaggio del mouse.
+\end{esempio}
+
+\subsection{Selettori complessi}
+Selezionano in base alla \emph{posizione nella struttura} del documento: sequenze di selettori
+semplici/compositi separate da \textbf{combinatori}. Forma: \texttt{S comb A} = ``seleziona
+gli elementi che rispettano A e che sono nella relazione \texttt{comb} con un elemento che
+rispetta S''.
+\begin{itemize}
+  \item \textbf{spazio} = \emph{discendente di}: \texttt{.articolo h1} = tutti gli H1
+        dentro (a qualsiasi profondit\`a) un elemento di classe \texttt{articolo}.
+  \item \texttt{>} = \emph{figlio di}: \texttt{ul.menu > li} = tutti gli LI direttamente
+        dentro un UL di classe \texttt{menu}.
+  \item \texttt{\textasciitilde} = \emph{fratello successivo di}:
+        \texttt{.introduzione \textasciitilde\ div} = tutti i DIV che, nello stesso genitore,
+        vengono (anche non consecutivamente) dopo un elemento di classe
+        \texttt{introduzione}.
+  \item \texttt{+} = \emph{prossimo fratello di}: \texttt{h1 + p} = il P che, nello stesso
+        genitore, viene \emph{immediatamente} dopo un H1.
+\end{itemize}
+
+\subsection{Liste di selettori}
+Una regola pu\`o applicarsi a una \emph{lista} di selettori separati da virgole: \`e un
+\textbf{OR} (selezionati gli elementi che rispettano \emph{almeno uno} dei selettori).
+\begin{lstlisting}[language=HTMLCSS]
+h2, .capitolo > h1, input[type="text"]:hover { /* stili */ }
+\end{lstlisting}
+
+\section{Il layout: display}
+
+La disposizione degli elementi \`e stabilita dal browser in base a due fattori:
+\begin{enumerate}
+  \item la \textbf{struttura della pagina}: un modello a \emph{scatole cinesi} in cui ogni
+        elemento \`e contenuto in un altro (tranne la radice \texttt{html}); idealmente ogni
+        elemento \`e posizionato dentro il riquadro del genitore. La struttura a scatole \`e
+        anche una struttura \emph{ad albero} (fondamentale per il DOM);
+  \item lo stile di \textbf{display} di ciascun elemento, espresso da due propriet\`a:
+        \begin{itemize}
+          \item \textbf{display-inside}: \emph{come l'elemento dispone i propri contenuti};
+          \item \textbf{display-outside}: \emph{come l'elemento preferirebbe essere disposto
+                nel contenitore}.
+        \end{itemize}
+        Ogni tipo di elemento ha valori di default, modificabili via CSS. Alcuni
+        display-inside tengono conto del display-outside dei figli, altri lo ignorano.
+\end{enumerate}
+
+La propriet\`a \texttt{display} \`e una scorciatoia per entrambi i valori (prima l'outside,
+poi l'inside); si pu\`o esprimere anche uno solo dei due:
+\begin{lstlisting}[language=HTMLCSS]
+p { display: inline flow; } /* outside: inline, inside: flow */
+p { display: block; }  /* outside block, inside resta flow */
+p { display: flex; }   /* inside flex, outside di default */
+\end{lstlisting}
+
+\subsection{display-inside: flow}
+\`E il \textbf{default} di (quasi) tutti gli elementi: dispone i contenuti come in un articolo
+di rivista. Qui \`e \emph{rilevante il display-outside dei contenuti}:
+\begin{itemize}
+  \item un elemento interno con outside \textbf{block} ottiene un riquadro che occupa
+        \emph{tutto il contenitore in orizzontale} e in altezza quanto gli serve (come un
+        paragrafo);
+  \item un elemento con outside \textbf{inline} \`e trattato come una sequenza di testo/simboli
+        che scorre da sinistra a destra su pi\`u righe; due inline consecutivi proseguono uno
+        dopo l'altro sulla stessa riga.
+\end{itemize}
+Con la propriet\`a \textbf{float} (\texttt{left}/\texttt{right}) un elemento esce dal flusso
+delle righe, che gli scorrono intorno (come un'immagine ``fluttuante'' nel testo).
+
+\textbf{flow-root}: variante di flow interessante su un elemento con outside \emph{inline}:
+l'elemento si dispone inline nel contenitore ma \emph{non} si distribuisce nel flusso: si
+comporta come un unico grosso ``carattere''.
+
+\subsection{display-inside: flex}
+Dispone gli elementi come \emph{sequenza di riquadri in riga o colonna}, adattandone le
+dimensioni. Si imposta con \texttt{display: flex} (o \texttt{inline flex} /
+\texttt{block flex}). \textbf{Ignora il display-outside dei contenuti}: a ognuno viene
+assegnato un riquadro. Propriet\`a del \emph{contenitore}:
+\begin{itemize}
+  \item \texttt{flex-direction}: \texttt{row} / \texttt{row-reverse} / \texttt{column} /
+        \texttt{column-reverse};
+  \item \texttt{flex-wrap}: se andare a capo quando lo spazio non basta (con \texttt{nowrap}
+        i contenuti ``sbordano'');
+  \item \texttt{justify-content}: allineamento lungo la direzione principale --
+        \texttt{flex-start} (sinistra, o alto se in colonna), \texttt{flex-end},
+        \texttt{center}, \texttt{space-between} (spazio in eccesso \emph{fra} gli elementi),
+        \texttt{space-around} (spazio distribuito \emph{attorno} agli elementi);
+  \item \texttt{align-items}: allineamento sull'asse trasversale -- \texttt{flex-start}
+        (alto, o sinistra se in colonna), \texttt{flex-end}, \texttt{center},
+        \texttt{stretch} (allunga a riempire), \texttt{baseline} (linea di base del testo).
+\end{itemize}
+Propriet\`a degli \emph{elementi contenuti}:
+\begin{itemize}
+  \item \texttt{flex-grow} ($\geq 0$, default 0): se, e in che proporzione, l'elemento \`e
+        disposto ad \emph{allargarsi} per occupare lo spazio disponibile;
+  \item \texttt{flex-shrink} ($\geq 0$, default 1): se, e in che proporzione, \`e disposto a
+        \emph{restringersi} per non eccedere lo spazio.
+\end{itemize}
+
+\subsection{display-inside: grid}
+Definisce una \textbf{griglia} (righe $\times$ colonne); ogni elemento occupa una o pi\`u
+celle contigue. Si imposta con \texttt{display: grid} (o \texttt{inline grid} /
+\texttt{block grid}); anch'esso \emph{ignora il display-outside dei contenuti}.
+\begin{itemize}
+  \item La griglia si configura sul contenitore con \texttt{grid-template-rows} e
+        \texttt{grid-template-columns}, che elencano altezze e larghezze; l'unit\`a
+        \texttt{fr} (\emph{frazione}) esprime dimensioni proporzionali; \texttt{repeat(n, v)}
+        \`e una scorciatoia:
+\begin{lstlisting}[language=HTMLCSS]
+grid-template-rows: 50px 1fr 2fr;
+grid-template-columns: repeat(4, 1fr) 10vw;
+\end{lstlisting}
+  \item Ogni elemento interno dichiara le celle che occupa con
+        \texttt{grid-row-start}, \texttt{grid-row-end}, \texttt{grid-column-start},
+        \texttt{grid-column-end}; \texttt{end} pu\`o usare la forma \texttt{span N}
+        (``estenditi per N celle''):
+\begin{lstlisting}[language=HTMLCSS]
+grid-row-start: 2;    grid-row-end: span 3;
+grid-column-start: 2; grid-column-end: span 2;
+\end{lstlisting}
+  \item Ulteriori propriet\`a regolano gli allineamenti reciproci e dentro l'area assegnata.
+\end{itemize}
+
+\subsection{display: none}
+La propriet\`a \texttt{display} pu\`o valere \texttt{none}: l'elemento viene
+\textbf{rimosso dalla visualizzazione}.
+
+\section{Strumenti per CSS}
+
+\begin{itemize}
+  \item \textbf{SCSS / SASS}: SCSS (\emph{Sassy CSS}) \`e un linguaggio pi\`u evoluto per
+        descrivere regole di stile; SASS \`e il \emph{pre-processore} che traduce
+        \texttt{.scss} in \texttt{.css} (il browser interpreta solo quest'ultimo). Vantaggi:
+        costanti riutilizzabili, inclusione di fogli in altri fogli, regole annidate (che
+        generano automaticamente composizioni di selettori).
+  \item \textbf{Bootstrap} (v5.3): insieme di CSS e JavaScript con stili e comportamenti di
+        default per i componenti comuni delle UI. Uno stile predefinito \`e semplicemente una
+        \emph{classe CSS}: usare Bootstrap = conoscere le sue classi e usarle nel proprio
+        HTML; si pu\`o usare solo la parte CSS o anche i componenti predefiniti (bottoni,
+        tendine, finestre modali). Vantaggi: meno codice per gli elementi frequenti, UI
+        \emph{responsive} pi\`u semplici. Svantaggi: UI ``fatte con lo stampino'',
+        customizzazione non banale.
+  \item \textbf{Tailwind}: \emph{rovescia} il rapporto HTML/CSS. Tradizionalmente l'HTML
+        esprime i contenuti caratterizzandoli con classi semantiche e il CSS dipende
+        dall'HTML; in Tailwind il CSS definisce \emph{classi di utilit\`a} generiche
+        (es. \texttt{bg-white}, \texttt{font-semibold}) ed \`e l'HTML a dipendere dal CSS.
+        Il CSS diventa estremamente riutilizzabile; svantaggio significativo: HTML pi\`u
+        verboso e ripetitivo (molto attenuato se si usano framework a componenti).
+\end{itemize}

@@ -1,0 +1,150 @@
+\chapter{Jakarta e le Servlet}
+
+\section{Jakarta EE e il Web Profile}
+
+Nelle applicazioni web basate sul \textbf{Jakarta Web Profile} si parte dal presupposto che
+sia il \emph{server HTTP} -- che esiste come applicativo indipendente -- a incapsulare
+l'applicazione (modello (a) del capitolo precedente). Il server di riferimento \`e
+\textbf{Apache Tomcat}, basato sul modello \emph{multi-thread}.
+
+\begin{definizione}[Jakarta EE e Web Profile]
+\textbf{Jakarta Enterprise Edition} (Jakarta EE, gi\`a \emph{Java} EE) \`e un insieme di
+specifiche che estendono Java con librerie, componenti e API per lo sviluppo di applicazioni
+commerciali, non incluse nel JDK standard. Il \textbf{Jakarta Web Profile} \`e il
+sottoinsieme orientato allo sviluppo di applicazioni web. Tomcat implementa la specifica del
+Web Profile: il suo runtime realizza un ambiente di esecuzione per l'applicazione
+server-side, fatto di classi, interfacce e oggetti Java utilizzabili per realizzare le
+funzionalit\`a previste.
+\end{definizione}
+
+I due strumenti principali del Jakarta Web Profile:
+\begin{itemize}
+  \item le \textbf{Servlet}: oggetti i cui metodi ricevono richieste HTTP, elaborano la
+        risorsa richiesta e la inviano in risposta. Lo sviluppatore scrive le proprie
+        classi-Servlet, istanziate da Tomcat all'avvio dell'applicazione; ogni Servlet
+        specifica le route a cui risponde e Tomcat le registra nella propria tabella di
+        routing, inoltrando le richieste alle servlet opportune;
+  \item le \textbf{JSP} (Jakarta Server Pages): pagine in un linguaggio che intreccia HTML e
+        frammenti di Java; a ciascuna Jakarta abbina una Servlet che, alla richiesta, usa la
+        JSP per \emph{generare una pagina HTML} da inviare al client -- il modello delle app
+        web multi-pagina \emph{orientate al server}. Nel corso non si usano: l'architettura
+        scelta \`e la single-page con due applicazioni indipendenti (client-side e
+        server-side) che scambiano JSON, dove la UI \`e costruita dal browser, non generata
+        dal server.
+\end{itemize}
+
+\section{Architettura di esecuzione di un'app basata su Servlet}
+
+Attori principali: il \textbf{Server HTTP} (Tomcat), l'\textbf{applicazione} (anche pi\`u
+istanze sulla stessa macchina) e il \textbf{Web Container}, che fa da interfaccia fra server
+e applicazioni, implementando la specifica del Web Profile e gestendo il \emph{ciclo di vita}
+delle servlet.
+
+\textbf{Il Server HTTP} riceve le richieste; rispetto alle app installate, valuta tramite il
+pathname se una richiesta:
+\begin{itemize}
+  \item deve andare verso una delle app (tipicamente ogni app \`e caratterizzata da un
+        segmento iniziale di pathname) $\rightarrow$ la passa al Web Container;
+  \item va gestita altrimenti (es. servire una risorsa statica);
+  \item riferisce una risorsa inesistente $\rightarrow$ risponde \texttt{404 Not Found}.
+\end{itemize}
+
+\textbf{Il Web Container} \`e responsabile di:
+\begin{itemize}
+  \item \emph{inizializzare} gli oggetti servlet all'avvio del server (o al primo rilascio
+        dell'app);
+  \item \emph{gestire le richieste} per l'applicazione e invocare i servizi della Servlet
+        opportuna (anche se il pathname punta a un'app, la specifica route pu\`o non essere
+        gestita: pu\`o generarsi comunque un 404);
+  \item \emph{gestire le eccezioni} sorte nell'app, inviando in tal caso
+        \texttt{500 Internal Server Error};
+  \item \emph{distruggere} le servlet allo spegnimento del server o alla disinstallazione.
+\end{itemize}
+
+\section{Cos'\`e una Servlet: la gerarchia di classi}
+
+\begin{lstlisting}[style=java]
+package tweb.myfirstapp;
+import java.io.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.*;
+
+@WebServlet(name = "helloServlet", value = "/hello-servlet")
+public class HelloServlet extends HttpServlet {
+  private String message;
+  public void init() { /* ... */ }
+  public void doGet(HttpServletRequest request,
+                    HttpServletResponse response) throws IOException {
+    /* ... */
+  }
+  public void destroy() { /* ... */ }
+}
+\end{lstlisting}
+
+Una Servlet \`e un'istanza di una classe che estende \texttt{HttpServlet}. La gerarchia:
+\begin{itemize}
+  \item l'\textbf{interfaccia \texttt{Servlet}} definisce i metodi che ogni Servlet deve
+        possedere -- quelli che servono al Web Container per gestirla:
+        \begin{itemize}
+          \item \texttt{init(ServletConfig config)}: invocato dal container per
+                inizializzare la Servlet dopo averla creata;
+          \item \texttt{service(ServletRequest req, ServletResponse res)}: invocato quando il
+                container chiede alla Servlet di gestire una richiesta e ottenere la
+                risposta;
+          \item \texttt{destroy()}: invocato prima della chiusura; la Servlet pu\`o ``fare
+                pulizia'' (connessioni aperte, servizi sottoscritti, registrazioni).
+        \end{itemize}
+  \item la classe astratta \textbf{\texttt{GenericServlet}} implementa \texttt{Servlet} dando
+        un'implementazione di base di \texttt{init(config)}: memorizza internamente
+        l'oggetto config e chiama un metodo \texttt{init()} \emph{senza parametri}, che non
+        fa nulla ma pu\`o essere ridefinito dalle sottoclassi;
+  \item la classe \textbf{\texttt{HttpServlet}} estende GenericServlet per il caso HTTP
+        (in teoria esistono Servlet per altri protocolli). Implementa il \texttt{service} di
+        base, che: verifica che la richiesta sia HTTP; crea gli oggetti
+        \texttt{HttpServletRequest/Response} dagli originali
+        \texttt{ServletRequest/Response}; invoca una propria \texttt{service} che accetta gli
+        oggetti Http; questa esamina il \emph{method HTTP} e chiama il metodo interno
+        \textbf{doXXX} corrispondente (\texttt{doGet}, \texttt{doPost}, \dots). I doXXX di
+        base non fanno nulla: \`e compito delle sottoclassi (le Servlet dell'applicazione)
+        implementare quelli relativi alle richieste che vogliono gestire.
+\end{itemize}
+
+\section{Il ciclo di vita di una Servlet}
+
+La vita di una Servlet inizia all'installazione (o, se gi\`a installata, all'avvio del
+server) e si conclude allo shutdown del server o alla disinstallazione; nel mezzo \`e sempre
+attiva e pronta a ricevere richieste. Tre momenti: \textbf{START}, \textbf{SERVICE},
+\textbf{STOP}.
+
+\begin{importante}[START]
+\emph{1 -- Creazione:} il Web Container crea un \textbf{ServletContext} (uno, comune a tutta
+l'applicazione); crea una \emph{singola istanza} per ciascuna Servlet dell'app; per ogni
+Servlet crea un oggetto \textbf{ServletConfig} con i parametri di configurazione (usando fra
+l'altro le informazioni annotate con \texttt{@WebServlet}) e un riferimento al
+ServletContext; inserisce in un suo \emph{registro} le Servlet e le route a cui rispondono.
+\emph{2 -- Inizializzazione:} per ogni Servlet \texttt{sN} con config \texttt{cfN}, il
+container chiama \texttt{sN.init(cfN)}, che a sua volta invoca \texttt{sN.init()}. Solo al
+completamento della init la Servlet \`e considerata attiva e pronta.
+\end{importante}
+
+\begin{importante}[SERVICE]
+\emph{1 -- Matching \& Routing:} il container effettua un \textbf{matching} fra la URL
+ricevuta e gli urlPattern dichiarati dalle Servlet, determinando la servlet ``vincente'';
+l'algoritmo ha una strategia per i conflitti (es. se una URL corrisponde a due pattern,
+``vince'' quello \emph{pi\`u lungo}). Se non c'\`e matching: \texttt{404 Not Found}.
+\emph{2 -- Predisposizione:} vengono predisposti gli oggetti
+\texttt{HttpServletRequest/Response} che estendono i \texttt{ServletRequest/Response} di
+partenza (la request contiene tutte le informazioni sulla richiesta: URL, method,
+header\dots).
+\emph{3 -- Invocazione del servizio:} il container chiama \texttt{s.service(req, res)} di
+HttpServlet con gli oggetti predisposti; questo invoca a sua volta il \texttt{doXXX}
+appropriato per la richiesta in esame.
+\end{importante}
+
+\begin{importante}[STOP]
+\emph{1 -- Cleaning up:} per ogni servlet il container chiama \texttt{destroy()} (di base non
+fa nulla; da ridefinire se la init ha fatto cose che vanno ``disfatte'', es. chiudere una
+connessione a un DB).
+\emph{2 -- Garbage collection:} vengono eliminati gli oggetti Servlet, i ServletConfig e il
+ServletContext.
+\end{importante}

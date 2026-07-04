@@ -1,0 +1,368 @@
+\chapter{Uno sguardo d'insieme alle applicazioni web}
+
+\section{Il World Wide Web e HTTP}
+
+\begin{definizione}[World Wide Web]
+Il \textbf{World Wide Web} (WWW o ``Web'') \`e un \emph{servizio della rete Internet}:
+di tipo \textbf{client/server}, basato sul protocollo di livello applicativo \textbf{HTTP},
+orientato alla pubblicazione e condivisione di contenuti e risorse digitali.
+Lo schema di base \`e: il \textbf{Web Client} (tipicamente un browser) invia una
+\emph{richiesta HTTP} al \textbf{Web Server}, che risponde con una \emph{risposta HTTP}.
+\end{definizione}
+
+Il Web nasce per condividere documenti e media: la richiesta HTTP specifica \emph{quale
+risorsa} si vuole da \emph{quale server}; la risposta ``contiene'' la risorsa, corredata
+di meta-informazioni che permettono al client di riprodurla al meglio.
+
+\textbf{Due tipologie di richieste (in prima battuta):}
+\begin{itemize}
+  \item \textbf{GET}: ottenere una risorsa. Deve indicare univocamente la risorsa, il server
+        e l'origine (mittente), cos\`i che il server sappia a chi rispondere.
+  \item \textbf{POST}: inviare dati al server perch\'e li elabori o conservi. La destinazione
+        \`e comunque una ``risorsa'', ma deve essere una risorsa in grado di effettuare una
+        computazione (uno script o applicativo eseguibile dal server, fatto per ricevere quei dati).
+\end{itemize}
+
+\textbf{La risposta HTTP} deve prima di tutto dire se la richiesta \`e andata a buon fine;
+in caso positivo contiene i dati (la risorsa per una GET, il risultato dell'elaborazione per
+una POST) e ne indica il \emph{tipo}, perch\'e il client possa renderli fruibili.
+
+\section{Le URL}
+
+\begin{definizione}[URL]
+Una \textbf{URL} (Uniform Resource Locator) \`e una stringa di testo con formato ben definito,
+in grado di identificare \emph{univocamente} ogni risorsa disponibile sul Web:
+\begin{center}
+\texttt{protocol://hostname[:port]/path[?querystring][\#fragment]}
+\end{center}
+Esempio: \texttt{http://www.organizzazione.it:80/utenti/profilo?name=picardi\#phone}
+\end{definizione}
+
+\begin{itemize}
+  \item \textbf{Protocol}: il protocollo di livello applicativo (HTTP per il Web, ma le URL
+        sono usate anche da FTP, SMTP, ecc.).
+  \item \textbf{Domain/Host}: identifica lo specifico Web Server. Tipicamente tre parti:
+        dominio di \emph{terzo} livello o sottodominio (\texttt{www}, associato a uno specifico host),
+        di \emph{secondo} livello (\texttt{organizzazione}, associato alla rete di
+        un'organizzazione) e di \emph{primo} livello (\texttt{it}, area geografica e/o tipologia
+        di organizzazione). ``Dominio'' generico = secondo + primo livello
+        (\texttt{organizzazione.it}); i domini si acquistano da provider e si registrano presso
+        il Registro del dominio di primo livello, a garanzia dell'univocit\`a.
+  \item \textbf{Port}: su uno stesso host possono rispondere pi\`u servizi, ognuno su una
+        ``porta'' identificata da un numero. Non si specifica se \`e quella di default:
+        \textbf{80} per HTTP, \textbf{443} per HTTPS (versione \emph{sicura}, cifrata, di HTTP).
+  \item \textbf{Path}: percorso per reperire la risorsa; segmenti separati da \texttt{/}. Pu\`o
+        essere un percorso reale di cartelle/file oppure un \emph{percorso logico} che identifica
+        una funzione di un applicativo.
+  \item \textbf{Query string}: testo opzionale che aggiunge informazioni come coppie
+        chiave/valore; inizia con \texttt{?}, coppie \texttt{c=v} separate da \texttt{\&}.
+        Es.: \texttt{?min=5\&max=100\&sort=alphabetical}.
+  \item \textbf{Fragment}: se la risposta \`e una pagina HTML, indica una collocazione precisa
+        (\emph{location}, definita nella pagina con un nome) a cui il browser deve posizionarsi;
+        preceduta da \texttt{\#}.
+\end{itemize}
+
+\begin{definizione}[DNS]
+Il \textbf{DNS} (Domain Name System) \`e il servizio di livello applicativo responsabile di
+tradurre lo \emph{hostname} nel corrispondente \emph{indirizzo IP}. HTTP usa i protocolli
+sottostanti TCP (trasporto) e IP (rete), che identificano gli host tramite indirizzi numerici:
+prima di inviare una richiesta HTTP, il client chiede al DNS server l'IP corrispondente allo
+hostname; solo a quel punto la richiesta pu\`o partire.
+\end{definizione}
+
+\section{HTML e ipertesto (panoramica)}
+
+Prima del Web, Internet serviva gi\`a a scambiare risorse, ma in modo scomodo: bisognava
+conoscere l'host, collegarvisi e scorrerlo cartella per cartella, con criteri di organizzazione
+diversi da host a host. Il Web nasce a fine anni '80 da due intuizioni:
+\begin{enumerate}
+  \item le \textbf{URL}: un indirizzo univoco e uniforme per qualsiasi risorsa, indipendente
+        dalla collocazione;
+  \item documenti \textbf{ipertestuali e multimediali}: un \emph{ipertesto} \`e un testo
+        multidimensionale, senza un'unica sequenza di lettura obbligatoria, con salti e rimandi
+        fra cui il fruitore si muove liberamente; la multimedialit\`a integra immagini, audio e
+        video nel documento.
+\end{enumerate}
+
+\begin{definizione}[HTML]
+\textbf{HTML} (HyperText Markup Language) \`e un linguaggio informatico ma \emph{non} un
+linguaggio di programmazione: non istruisce un agente di calcolo su come elaborare dati.
+\`E un linguaggio di \textbf{markup} (annotazione): le pagine HTML sono documenti plain text
+contenenti \emph{tag} (etichette) che indicano al browser come strutturare la pagina; ulteriori
+tag specificano link ipertestuali attivabili cliccando su porzioni di testo o aree
+(\emph{hot spot}). \`E complementato da \textbf{CSS} (Cascading Style Sheet), con cui si comunica
+al browser l'aspetto grafico di ciascun elemento.
+\end{definizione}
+
+Le pagine HTML sono il ``mattone fondamentale'' del Web: contengono testo e media, e
+collegamenti ad altre risorse (media usati per visualizzare la pagina stessa, o rimandi
+ipertestuali ad altre pagine). \`E grazie a questi collegamenti che il Web \`e \emph{navigabile}
+-- l'immagine delle risorse sparse per il mondo e collegate fra loro richiama una ragnatela,
+da cui il nome ``Web''.
+
+\section{Risorse statiche e dinamiche}
+
+\begin{definizione}[Risorsa statica vs dinamica]
+Una risorsa (o pagina) individuata da una URL \`e \textbf{statica} se corrisponde a un file
+gi\`a esistente, che il server deve semplicemente restituire al client (la URL rimanda a una
+risorsa fisica, anche se il path logico pu\`o non coincidere con il path nel file system).
+\`E \textbf{dinamica} se viene \emph{calcolata sul momento}: la URL rimanda a un programma o
+script eseguibile, che effettua un calcolo e restituisce il risultato (sulla base dei dati
+nella richiesta HTTP, del file system, di basi di dati o di servizi di terze parti).
+\end{definizione}
+
+\textbf{Esecuzione lato server.} Un Web Server \`e un software installato sulla macchina host.
+Diverse tipologie di Web Server sanno eseguire programmi in diversi linguaggi (tipicamente
+interpretati come JavaScript o ibridi come Java), contenendo al proprio interno un
+\emph{agente di esecuzione} per quel linguaggio (es. una Java Virtual Machine). Si possono
+cos\`i scrivere applicativi \textbf{server-side}, che rispondono a determinate richieste HTTP
+su determinate URL attivando opportune funzioni di calcolo: la funzione attivata dipende dal
+\emph{path}, dall'eventuale \emph{query string} e dai \emph{dati} della richiesta (se POST) --
+elementi che fanno anche da input del calcolo. L'output viene incapsulato nella risposta HTTP.
+Linguaggi diffusi lato server: JavaScript, Java, C\#, PHP, Python, Ruby.
+
+\section{Anatomia di una transazione HTTP}
+
+\begin{importante}[I 6 passi di una transazione HTTP]
+\begin{enumerate}
+  \item \textbf{Il client ``riceve'' una URL}: dall'utente in modo diretto (barra degli
+        indirizzi) o indiretto (click su un link); come effetto di una precedente richiesta
+        (una pagina HTML pu\`o richiedere altre N risorse, es. immagini); oppure generata
+        dall'esecuzione di codice client-side.
+  \item \textbf{Il client chiede al DNS} l'indirizzo IP dell'host della URL.
+  \item \textbf{Il client invia la richiesta HTTP} a quell'IP; la richiesta contiene comunque
+        la URL originale.
+  \item \textbf{Smistamento per porta}: l'host verifica che la porta specificata corrisponda
+        effettivamente a un web server e non ad altro servizio.
+  \item \textbf{Il Web Server esamina la URL} (in particolare il path):
+        (a) risorsa \emph{statica} $\rightarrow$ la reperisce nel file system e la incapsula
+        nella risposta; (b) risorsa \emph{dinamica} $\rightarrow$ esegue il programma
+        corrispondente e ne incapsula l'output (lo scopo pu\`o anche essere solo salvare un
+        dato o notificare terzi: in ogni caso l'esito va comunicato nella risposta);
+        (c) risorsa \emph{inesistente} $\rightarrow$ risposta con codice d'errore
+        (il celebre \texttt{404 Not Found}).
+  \item \textbf{La risposta torna al client}, che la ``spacchetta'' determinando il tipo di
+        dato: se \`e HTML la visualizza; immagini, audio, video, PDF sono gestiti
+        autonomamente; tipi non gestiti vengono proposti in download.
+\end{enumerate}
+\end{importante}
+
+\section{Pagine interattive ed esecuzione lato client}
+
+Una pagina HTML \`e \textbf{passiva} quando pu\`o solo essere letta (al pi\`u si clicca un
+link per \emph{navigare} altrove). \`E \textbf{interattiva} quando il browser ``fa qualcosa''
+(oltre a navigare) in risposta alle azioni dell'utente -- concretamente: esegue codice.
+Una concezione corretta di interattivit\`a prevede che l'aspetto della pagina si modifichi
+per dare conto che ``qualcosa \`e stato fatto''. Si distingue:
+\emph{interattivit\`a semplice} (effetto solo sulla visualizzazione, per migliorare la
+fruizione) e \emph{interattivit\`a complessa} (vera elaborazione dati, con eventuali richieste
+verso un Web Server $\rightarrow$ si parla di \textbf{applicazione client-side}).
+
+\textbf{Esecuzione lato client.} Ogni browser contiene un \emph{motore di esecuzione} per
+JavaScript (linguaggio interpretato). Quando arriva una pagina con script, il browser lo
+esegue: l'effetto principale \`e ``popolare'' l'ambiente di esecuzione di \emph{funzioni da
+eseguire in risposta a eventi} (click, tasti, movimenti del mouse, ecc.). L'ambiente mette a
+disposizione una rappresentazione a oggetti della pagina (il DOM), che il codice pu\`o
+modificare cambiando l'aspetto della pagina; pu\`o anche contenere oggetti e variabili che
+mantengono uno \emph{stato}: cos\`i la pagina diventa la user interface di un vero applicativo
+\textbf{client-side}.
+
+\begin{importante}
+Le richieste HTTP formulate da codice JavaScript hanno una peculiarit\`a: i dati della
+risposta \emph{non} vengono gestiti dal browser, ma \textbf{ricevuti dallo stesso codice che
+ha formulato la richiesta}, che pu\`o elaborarli e usarli per modificare ci\`o che l'utente
+vede. Inoltre: il browser esegue \emph{solo} JavaScript; le applicazioni client-side o sono
+scritte in JavaScript o devono essere \emph{tradotte} in JavaScript prima dell'esecuzione.
+\end{importante}
+
+\section{Anatomia di un ciclo del browser}
+
+\begin{esamebox}
+\emph{``Descrivere le fasi che compongono un ciclo del browser, a partire da quando esso
+ottiene una pagina HTML in risposta a una precedente transazione HTTP.''}
+\end{esamebox}
+
+\begin{enumerate}
+  \item Il browser \textbf{ottiene una pagina HTML} (esito di una precedente transazione HTTP).
+  \item Determina se la pagina specifica \textbf{ulteriori risorse} necessarie alla
+        \emph{renderizzazione}: quasi sempre uno o pi\`u fogli di stile CSS (regole che
+        istruiscono il browser sull'aspetto grafico), immagini o altri media e, se la pagina
+        \`e interattiva, uno o pi\`u script JavaScript. Il browser le richiede con altrettante
+        transazioni HTTP. Con HTML e CSS il browser \textbf{inizializza il DOM}
+        (Document Object Model): la rappresentazione ad albero del documento, con nodo radice,
+        nodi intermedi (elementi) e foglie (testo, commenti); il DOM pu\`o essere modificato
+        durante la vita della pagina e ``muore'' alla chiusura o al ricaricamento.
+  \item Appena ha le risorse necessarie, il browser \textbf{renderizza} la pagina
+        (la disegna applicando gli stili). Se la pagina \`e passiva, il ciclo termina qui.
+  \item Appena riceve gli script, il browser \textbf{li esegue}. In teoria i passi 3 e 4
+        potrebbero avvenire in qualsiasi ordine; in pratica si fa in modo che gli script
+        girino quando il resto della pagina \`e caricato. Gli script predispongono l'ambiente
+        di esecuzione: creano oggetti che mantengono lo stato e \emph{registrano} le funzioni
+        da eseguire in corrispondenza degli eventi. Due tipologie principali di eventi:
+        \textbf{eventi utente} (click, tasti, scrolling, tap) ed \textbf{eventi di rete}
+        (arrivo della risposta a una richiesta HTTP, timeout).
+  \item \textbf{Sopraggiunge un evento} (utente o di rete): il browser attiva la funzione
+        registrata. I suoi effetti ``percepibili'' possono essere: generare altre connessioni
+        HTTP (per dati o per spostarsi di pagina) e/o modificare l'aspetto della pagina.
+        Le richieste HTTP generate \emph{non sono bloccanti}: vengono avviate, e la gestione
+        della futura risposta \`e demandata in modo asincrono a una funzione registrata
+        nell'ambiente di esecuzione.
+  \item Quando l'aspetto della pagina viene modificato, il browser \textbf{ri-renderizza}
+        \emph{solo le parti modificate}: \`e questo a rendere l'interazione fluida.
+        La ri-renderizzazione avviene appena l'ambiente JavaScript rilascia il controllo sul
+        thread di esecuzione.
+\end{enumerate}
+
+Il ciclo prosegue (eventi $\rightarrow$ modifiche $\rightarrow$ re-rendering) finch\'e la
+pagina resta aperta.
+
+\section{Il protocollo HTTP in dettaglio}
+
+\begin{definizione}[Struttura di richieste e risposte HTTP]
+Richieste e risposte HTTP condividono la stessa struttura generale:
+\begin{itemize}
+  \item \textbf{Start line}: definisce la natura del messaggio
+        (\emph{request line} / \emph{response line});
+  \item \textbf{Header}: coppie \texttt{nome: valore} che dettagliano il messaggio;
+  \item una \textbf{riga vuota} separa le meta-informazioni (start line + header) dal
+  \item \textbf{Body} (o \emph{payload}): il contenuto vero e proprio.
+\end{itemize}
+\end{definizione}
+
+\subsection{La HTTP Request}
+\begin{itemize}
+  \item \textbf{Request line}: \emph{HTTP method} (o verb: azione da eseguire sul server;
+        i due ``di base'' sono \textbf{GET} -- il server fornisce informazioni -- e
+        \textbf{POST} -- il server elabora i dati che riceve), \emph{destinazione}
+        (URL completa o solo path assoluto, assumendo come hostname il ricevente),
+        \emph{versione} del protocollo.
+  \item \textbf{Header}: molti sono impostati automaticamente dal browser. I pi\`u
+        comunemente impostati dal programmatore: \texttt{Accept} (tipi di dati accettati in
+        risposta), \texttt{Content-Type} (tipo dei dati nel body), \texttt{User-Agent}
+        (informazioni sul client).
+  \item \textbf{Body}: le GET non ce l'hanno (chiedono dati, non ne inviano). Le POST s\`i,
+        tipicamente di tipo \texttt{application/x-www-form-urlencoded} (dati di un form
+        inviato dal browser) o \texttt{application/json} (dati elaborati e inviati da una app
+        client-side).
+\end{itemize}
+
+\begin{definizione}[Tipi MIME]
+Negli header HTTP il tipo di dato si esprime nel formato \textbf{MIME}
+(Multipurpose Internet Mail Extension, nato per gli allegati email): \texttt{tipo/sottotipo}.
+Esempi comuni: \texttt{text/html}, \texttt{text/plain}, \texttt{text/css},
+\texttt{text/javascript}, \texttt{image/jpeg}, \texttt{image/png},
+\texttt{application/json}, \texttt{application/pdf}, \texttt{application/xml},
+\texttt{video/mp4}.
+\end{definizione}
+
+\subsection{La HTTP Response}
+\begin{itemize}
+  \item \textbf{Response line}: \emph{versione}; \emph{status code} (esito della richiesta,
+        in 5 categorie identificate dalla prima cifra -- in particolare
+        \textbf{2XX} = successo, \textbf{4XX} = fallita per errore del \emph{client},
+        \textbf{5XX} = fallita per errore del \emph{server}); \emph{status text}
+        (descrizione testuale, es. code 404 $\rightarrow$ ``Not Found'').
+  \item \textbf{Header} pi\`u comuni: \texttt{Content-Type}, \texttt{Content-Length}
+        (lunghezza del body in byte), \texttt{Server} (tipologia di Web Server),
+        \texttt{Date} (giorno e ora di invio).
+  \item \textbf{Body}: le risposte lo hanno \emph{necessariamente}. Tipi pi\`u comuni:
+        \texttt{text/html} (pagina da visualizzare), \texttt{application/json} (dati per
+        un'app client-side), e in generale \texttt{text/*}, \texttt{image/*},
+        \texttt{audio/*}, \texttt{video/*}, \texttt{application/*} (fogli di stile, script,
+        media, file scaricabili\dots).
+\end{itemize}
+
+\section{Applicazioni web ``full stack''}
+
+Il caso pi\`u completo: applicazione \textbf{client-side + server-side}.
+
+\begin{enumerate}
+  \item \textbf{Il Web Server \`e sempre online}: pubblica staticamente la pagina HTML con gli
+        script dell'app client-side e mantiene in esecuzione l'app server-side (meccanismi del
+        Web Server la ``bootstrappano'' all'avvio). Il Web Server \`e l'\emph{ambiente
+        operativo} dell'app server-side (come il S.O. lo \`e per le app desktop). L'insieme
+        di URL su cui l'app server-side risponde \`e detto \textbf{API} dell'applicazione
+        server-side.
+  \item \textbf{Il browser richiede la pagina HTML} dell'app client-side; seguono le
+        transazioni per media e script. Poi: renderizza la pagina e attiva l'ambiente
+        JavaScript eseguendo gli script (= avvio dell'app client-side). La memoria dinamica
+        dell'ambiente \emph{non} viene resettata finch\'e la pagina resta aperta; ogni pagina
+        ha un ambiente indipendente.
+  \item \textbf{L'utente genera eventi}: se all'evento \`e associata una funzione, viene
+        eseguita. Effetti possibili (anche entrambi): generare una richiesta verso l'app
+        server-side (di cui l'app client deve conoscere le URL) e/o modificare la pagina.
+  \item \textbf{Il browser effettua una richiesta HTTP} su una URL dell'API server-side
+        (per ottenere dati, elaborare, salvare). La richiesta \`e \emph{non bloccante} e
+        restituisce subito il controllo. Le app client-side sono \textbf{single-thread}
+        (esistono i Web Workers per thread in background, ma sono usati in casi particolari):
+        \`e importante che le elaborazioni in risposta a eventi siano rapide per non dare la
+        sensazione di interfaccia bloccata.
+  \item \textbf{Il Web Server inoltra la richiesta all'app server-side}, che la ``spacchetta''
+        (method, path, query string, body con \texttt{Content-Type}) per capire quale
+        funzionalit\`a attivare e con quali dati. Quasi sempre l'elaborazione interagisce con
+        un \textbf{Database Server} (per ottenere informazioni da inviare o memorizzare dati).
+        Il risultato viene confezionato in una risposta HTTP (body + \texttt{Content-Type}
+        corretto + informazioni per abbinarla alla richiesta originale).
+        A differenza del client, il server gestisce \emph{molte richieste in parallelo}: la
+        maggior parte dei Web Server genera un \textbf{thread separato per ogni richiesta};
+        l'approccio alternativo (adottato da Node.js) \`e un \textbf{single-threaded loop}
+        con elaborazioni non-bloccanti (asincrone).
+  \item \textbf{La risposta arriva al client}: il browser la traduce in un evento di rete e
+        richiama la funzione registrata al momento della richiesta. Anche qui: possibile nuova
+        richiesta e/o modifica della pagina.
+  \item \textbf{Il browser ri-renderizza} le sole parti modificate, appena il thread
+        JavaScript rilascia il controllo.
+\end{enumerate}
+
+\section{Front-end e back-end vs client-side e server-side}
+
+\begin{definizione}[Architettura a strati]
+L'\textbf{architettura a strati} \`e un pattern di progettazione in cui la logica applicativa
+\`e suddivisa su pi\`u \emph{strati} (layer), ognuno dei quali offre funzionalit\`a allo strato
+superiore sfruttando quelle dello strato inferiore. Centrale \`e il concetto di
+\textbf{interfaccia} fra strati: lo strato che offre servizi definisce formalmente le richieste
+accettate (input) e le risposte (output). Vantaggi: ogni strato \`e gestibile separatamente
+(si pu\`o cambiarne l'implementazione senza toccare gli altri, se l'interfaccia resta stabile);
+sullo stesso strato possono convivere moduli alternativi con la stessa interfaccia.
+\end{definizione}
+
+\begin{itemize}
+  \item \textbf{Back-end} = lo strato \emph{pi\`u basso}: gestisce la \textbf{persistenza dei
+        dati}. Nelle app web tipicamente interagisce con un database server: traduce i dati
+        dal formato dell'applicazione a quello del DB (es. record di tabelle relazionali) e
+        viceversa; pu\`o occuparsi di verifiche sui dati, transazioni, rollback. \`E la
+        \emph{source of truth} per il Data Model.
+  \item \textbf{Front-end} = lo strato \emph{pi\`u alto}: si occupa dell'\textbf{interazione
+        con l'utente}. Ne fanno parte la User Interface (l'interfaccia verso lo ``strato
+        superiore'', che \`e un essere umano!) ed eventuali moduli che rendono fruibili le
+        informazioni.
+  \item \textbf{Strati intermedi}: elaborazioni che non appartengono pienamente n\'e all'uno
+        n\'e all'altro (eventualmente con servizi di terze parti); ha senso isolarle se si
+        vuole renderle indipendenti da entrambi.
+\end{itemize}
+
+\begin{esamebox}
+\emph{``Spiegare la differenza concettuale fra la distinzione client-side/server-side e la
+distinzione front-end/back-end.''}
+\end{esamebox}
+
+\begin{importante}[Due distinzioni diverse]
+\textbf{Client-side / server-side} \`e una distinzione sul \emph{luogo di esecuzione}:
+client-side = codice eseguito dal Web Client (browser, col suo motore JavaScript);
+server-side = codice eseguito dentro il Web Server (con il suo agente di esecuzione, es. JVM).
+\textbf{Front-end / back-end} \`e una distinzione sul \emph{ruolo/responsabilit\`a}:
+front-end = interfaccia con l'utente (presentare informazioni, raccogliere azioni);
+back-end = logica applicativa e gestione/persistenza dei dati.
+\end{importante}
+
+\textbf{Perch\'e non coincidono.} Nelle app web il front-end \`e \emph{necessariamente} in
+parte lato client (\`e l'unico che pu\`o avere una UI) e il back-end \`e \emph{tipicamente}
+(ma non obbligatoriamente) lato server. Gli strati intermedi possono stare da entrambe le
+parti: le elaborazioni lato client non sovraccaricano il server, ma richiedono che i dati
+necessari siano sul client (problemi: riservatezza, volumi di dati); quelle lato server
+accedono a tutto il DB, ma elaborazioni costose creano problemi di scalabilit\`a.
+La configurazione tipica (front-end lato client + back-end lato server) fa s\`i che i termini
+vengano spesso usati come sinonimi, ma \textbf{una distinzione riguarda l'organizzazione
+logica, l'altra quella implementativa}: ad esempio la generazione dinamica di pagine HTML
+lato server (CMS come Wordpress o Moodle) \`e logica di \emph{front-end} eseguita
+\emph{server-side}.

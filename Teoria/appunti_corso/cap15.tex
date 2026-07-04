@@ -1,0 +1,135 @@
+\chapter{Server-side app con Node.js ed Express}
+
+\section{Node.js: il server HTTP di base}
+
+Node.js incarna il modello (b) del capitolo 10: \emph{l'app contiene il server HTTP}, con
+gestione \textbf{single-thread ad asynchronous event loop}. Le librerie di Node forniscono
+l'oggetto \texttt{http}, con cui creare un server (\texttt{createServer}) e attivarlo in
+ascolto su una porta:
+
+\begin{lstlisting}[language=JavaScript]
+import http from "http";
+import {IncomingMessage, ServerResponse} from "node:http";
+const porta = 8555;
+const serverFun = async (req: IncomingMessage, res: ServerResponse) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.statusCode = 200;
+  res.write(`<h2>${req.method} - ${req.url}</h2>`);
+  res.write(`<pre>${JSON.stringify(req.headers)}</pre>`);
+  if (req.method === "POST") {
+    res.write(`<h3>Body</h3>`);
+    const body = await text(req);
+    res.write(body);
+  }
+  res.end();
+};
+http.createServer(serverFun).listen(porta);
+\end{lstlisting}
+
+Il metodo \texttt{createServer} prende come argomento \emph{la funzione che riceve le
+richieste ed elabora le risposte} -- \`e lei ad attuare le funzionalit\`a dell'applicazione.
+Deve avere la forma
+\texttt{(req: IncomingMessage, res: ServerResponse) => \dots}
+
+\subsection{IncomingMessage: l'oggetto request}
+Permette di conoscere le caratteristiche della richiesta:
+\begin{itemize}
+  \item \texttt{req.method}: string (\texttt{"GET"}, \texttt{"POST"}, \dots);
+  \item \texttt{req.url}: string; contiene la URL \emph{assoluta} (senza hostname/porta);
+  \item \texttt{req.headers}: oggetto di coppie chiave-valore con gli header.
+\end{itemize}
+Se la richiesta \`e POST, il \textbf{body} si legge usando \texttt{req} come \emph{stream di
+input}. Il modo pi\`u semplice: gli \textbf{stream consumer} di Node -- funzioni che
+``consumano'' uno stream e restituiscono una \emph{Promise} dell'oggetto contenuto; va usato
+il consumer adatto al Content-Type: \texttt{text} legge lo stream come testo semplice,
+\texttt{json} lo legge come JSON string e la deserializza, ecc. (Una trattazione approfondita
+degli stream di Node esula dal corso, ma va approfondita per usare Node sul serio.)
+
+\subsection{ServerResponse: l'oggetto response}
+Permette di impostare la risposta:
+\begin{itemize}
+  \item \texttt{res.statusCode} / \texttt{setStatus(statusCode)}: lo status code (200, 404,
+        \dots);
+  \item \texttt{res.setHeader(name, val)}: il valore di un header;
+  \item il \textbf{body} si scrive usando \texttt{res} come \emph{stream di output}:
+        \texttt{res.write(text)} per inviare testo, chiudendo poi con \texttt{res.end()};
+  \item alternativa: \emph{inoltrare un intero stream di input} sull'output con
+        \texttt{req.pipe(res)} -- in questo caso non serve terminare lo stream (termina da
+        solo alla fine dell'inoltro).
+\end{itemize}
+
+\section{Express}
+
+\begin{lstlisting}[language=JavaScript]
+import express from "express";      // FRAMEWORK
+const app = express();  // APP OBJECT, INCLUDE IL SERVER HTTP
+const port = 8883;
+// MIDDLEWARE
+app.use(express.static("public"));
+app.use(express.json());
+// REQUEST HANDLERS
+app.get("/test/:pr1/:pr2",
+  async (req: express.Request, res: express.Response) => { ... })
+app.post("/test/:pr1/:pr2",
+  async (req: express.Request, res: express.Response) => { ... })
+// SERVER ACTIVATION
+app.listen(port, () => {
+  console.log("Server running on port " + port);
+});
+\end{lstlisting}
+
+L'oggetto \texttt{app}, creato tramite il framework \textbf{express}, \emph{include il
+server http} e fornisce funzionalit\`a aggiuntive. Configurata l'app, la si attiva con
+\texttt{app.listen(port, host?, callback)}: se non si specifica lo host, di default \`e
+\texttt{localhost}; la callback viene eseguita quando il server inizia a ricevere richieste.
+
+\subsection{Il middleware in Express}
+In generale il middleware \`e una funzione
+\begin{center}
+\texttt{(req: express.Request, res: express.Response, next: express.NextFunction) => void}
+\end{center}
+Il suo ruolo: elaborazioni preliminari su richiesta o risposta, e decidere se la richiesta
+pu\`o ``proseguire l'iter'' -- in tal caso invoca la funzione \textbf{next()} ricevuta come
+parametro; altrimenti, invece di next(), invia una \emph{risposta di errore}.
+
+Nell'esempio, due middleware forniti da express:
+\begin{itemize}
+  \item \texttt{express.static("public")}: i contenuti della cartella indicata vengono
+        \emph{serviti staticamente};
+  \item \texttt{express.json()}: \emph{trasforma la richiesta} pre-analizzando il body (se
+        c'\`e) come JSON string, deserializzandolo e memorizzandolo nella propriet\`a
+        \texttt{body} dell'oggetto req.
+\end{itemize}
+Si pu\`o subordinare un middleware alla struttura della route:
+\texttt{app.use(routeExpression, middleware)} lo applica solo se la URL corrisponde alla
+routeExpression -- una stringa che esprime una route (o un insieme di route), con eventuali
+\emph{segmenti parametrici} preceduti da \texttt{:} e il carattere jolly \texttt{*}:
+\texttt{/il/mio/pa*th/:nome/:id}.
+
+\subsection{I request handler in Express}
+L'applicazione si configura specificando un \textbf{request handler} per ogni
+\emph{method+route} dell'API da esporre. L'oggetto app ha un metodo di registrazione per ogni
+method HTTP: \texttt{app.get()} per le route in GET, \texttt{app.post()} per quelle in POST,
+e cos\`i via. Il primo parametro \`e sempre la route (anche qui con segmenti parametrici e
+jolly: a rigore l'handler \`e associato a un \emph{insieme} di route); il secondo \`e
+l'handler, una funzione
+\texttt{(req: express.Request, res: express.Response) => void}.
+
+\textbf{express.Request} \`e pi\`u ricco del corrispettivo di Node base, perch\'e
+\emph{pre-elaborato} da express: i parametri sono gi\`a estratti --
+\begin{itemize}
+  \item \texttt{req.query}: oggetto chiave-valore con i parametri della \emph{query string};
+  \item \texttt{req.params}: oggetto chiave-valore con i \emph{segmenti parametrici} della
+        route;
+  \item \texttt{req.body}: il body della request, se presente e se interpretato tramite un
+        opportuno middleware (es. \texttt{express.json()}).
+\end{itemize}
+
+\textbf{express.Response} prevede anch'esso funzionalit\`a aggiuntive: il metodo
+\textbf{send} invia la risposta in un'unica soluzione, curando anche di \emph{chiudere lo
+stream} al termine, e \emph{rileva automaticamente} le caratteristiche della risposta
+(Content-Type, Content-Length) impostando i relativi header. Status code e invio in un'unica
+riga per concatenazione:
+\begin{lstlisting}[language=JavaScript]
+res.status(code).send(content)
+\end{lstlisting}
