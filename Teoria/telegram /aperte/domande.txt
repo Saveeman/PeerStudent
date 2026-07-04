@@ -1,0 +1,471 @@
+========================================================================
+DOMANDA 1 - Delineare le principali funzionalità di un Web Server
+========================================================================
+
+Un Web Server è un software installato sulla macchina che fa da host, il
+cui compito fondamentale è ricevere richieste HTTP da parte dei client,
+elaborarle e restituire una risposta HTTP contenente la risorsa richiesta
+(o un codice di errore, ad esempio 404 Not Found se la risorsa non esiste).
+
+La funzione di base si articola in tre momenti: restare in ascolto delle
+richieste su una determinata porta, esaminare la richiesta (in particolare
+la URL e il suo path) per stabilire quale risorsa è richiesta, e confezionare
+la risposta. A questo proposito le risorse possono essere di due tipi:
+- STATICHE: la risorsa esiste già come file nel file system del server, che
+  la incapsula così com'è nella risposta (una pagina HTML, un'immagine, un PDF).
+- DINAMICHE: la URL corrisponde a un programma/script eseguibile lato server,
+  che viene eseguito per calcolare la risorsa sul momento; l'output viene poi
+  incapsulato nella risposta. La funzione di calcolo attivata dipende dal path,
+  dall'eventuale query string e dai dati della richiesta (se è di tipo POST).
+Per eseguire codice dinamico, il Web Server contiene al proprio interno un
+agente di esecuzione per il linguaggio usato (ad esempio una Java Virtual
+Machine per Java).
+
+Oltre a questo compito fondamentale, un Web Server offre tipicamente una serie
+di funzionalità aggiuntive importanti:
+
+- VIRTUAL HOSTING: uno stesso Web Server può ospitare più host, ciascuno con
+  il proprio hostname, pur avendo un unico indirizzo IP. Poiché tutti gli
+  hostname virtuali sono mappati dal DNS sullo stesso IP, il server deve
+  esaminare l'hostname contenuto nella richiesta HTTP per capire quale sito
+  servire. (Spesso ci si appoggia al reverse proxying, es. Nginx.)
+
+- AUTORIZZAZIONE E AUTENTICAZIONE: sono due cose distinte ma usate in sinergia.
+  L'autenticazione riguarda il riconoscere l'identità dell'utente che richiede
+  una risorsa; l'autorizzazione riguarda il permettere o vietare l'accesso a
+  una risorsa (ad esempio in base all'IP del mittente).
+
+- CACHING: il server può memorizzare le risposte HTTP associate alle relative
+  richieste, per evitare di dover rielaborare la stessa risorsa a fronte della
+  stessa richiesta. L'obiettivo è velocizzare la risposta e ridurre il carico
+  del server; è particolarmente utile per risorse dinamiche costose da calcolare.
+  La validità e la scadenza della cache possono essere negoziate tra client e
+  server tramite gli header HTTP.
+
+- RIDUZIONE DI BANDA (bandwidth throttling): limitare la banda dedicata a una
+  singola richiesta, così da garantire un'esperienza accettabile a tutti gli
+  utenti (evitando che un singolo download saturi le risorse).
+
+- RISCRITTURA DELLE URL (rewrite engine): presentare all'utente URL "pulite"
+  e leggibili, riscrivendole internamente verso le risorse effettive.
+
+- LOGGING: registrare informazioni sugli scambi HTTP per scopi statistici e di
+  sicurezza.
+
+In sintesi: il cuore del Web Server è il ciclo ricevi-elabora-rispondi su HTTP,
+con la distinzione fondamentale fra risorse statiche e dinamiche; attorno a
+questo cuore si aggiungono servizi come virtual hosting, caching, autenticazione/
+autorizzazione, throttling, rewrite engine e logging.
+
+
+========================================================================
+DOMANDA 2 - Descrivere le fasi che compongono un ciclo del browser, a
+partire da quando esso ottiene una pagina HTML in risposta a una
+precedente transazione HTTP
+========================================================================
+
+Quando il browser riceve una pagina HTML come risposta a una transazione HTTP,
+inizia un ciclo che porta dalla pagina "grezza" a una pagina viva e interattiva.
+
+1) COSTRUZIONE DEL DOM. Il browser utilizza l'HTML (e il CSS collegato) per
+   inizializzare il DOM (Document Object Model) della pagina. Il DOM è una
+   rappresentazione ad albero del documento: possiede un nodo radice (root),
+   nodi intermedi (tipicamente elementi HTML) e foglie (testo, commenti). Il
+   DOM non è statico: può essere modificato durante la vita della pagina, e la
+   sua vita termina quando la pagina viene chiusa o ricaricata.
+
+2) RENDERING (VISUALIZZAZIONE). Il browser usa il DOM e le informazioni di
+   stile (CSS) per disegnare graficamente la pagina, applicando colori, font,
+   spaziature e allineamenti definiti dagli stili.
+
+3) ESECUZIONE DEGLI SCRIPT. Se la pagina include codice JavaScript, il browser
+   lo esegue in un ambiente di esecuzione dedicato. Il codice tipicamente segue
+   uno schema ricorrente: (a) trovare nel DOM gli elementi su cui intervenire,
+   (b) registrare su di essi dei listener (funzioni da eseguire al verificarsi
+   di un evento su un certo target), (c) quando l'evento si verifica, modificare
+   opportunamente il DOM.
+
+4) GESTIONE DEGLI EVENTI (asynchronous single-thread event loop). L'ambiente di
+   esecuzione di JavaScript interagisce con il mondo esterno tramite eventi,
+   gestiti da un unico thread tramite un loop su una coda di eventi. Gli eventi
+   sono di due tipi:
+   - ESOGENI: generati spontaneamente dall'esterno, tipicamente dall'interazione
+     dell'utente con la UI (click, input, ecc.).
+   - ENDOGENI: conseguenza di richieste avviate dall'applicazione stessa (ad
+     esempio una fetch), che avviano elaborazioni esterne potenzialmente lunghe.
+   Il modello è single-thread e non bloccante: gli eventi vengono accodati e
+   processati in ordine di arrivo; le operazioni potenzialmente lente (I/O, rete)
+   vengono avviate in modo asincrono, e la loro conclusione genera a sua volta
+   un evento che verrà gestito quando arriva il suo turno nella coda.
+
+5) AGGIORNAMENTO E RI-RENDERING. Quando un listener modifica il DOM (o cambia
+   lo stile), il browser aggiorna la visualizzazione di conseguenza. In questo
+   modo il DOM resta sempre coerente con lo stato dell'applicazione, e la pagina
+   appare dinamica: solo le parti modificate vengono ridisegnate, senza dover
+   ricaricare l'intera pagina.
+
+In sintesi: ricezione HTML -> costruzione del DOM -> rendering -> esecuzione
+degli script con registrazione dei listener -> gestione degli eventi tramite
+event loop asincrono single-thread -> modifica del DOM e ri-rendering, in un
+ciclo che si ripete finché la pagina resta aperta.
+
+
+========================================================================
+DOMANDA 3 - Descrivere le caratteristiche del linguaggio TypeScript in
+quanto estensione di JavaScript (le caratteristiche proprie, non quelle
+ereditate da JavaScript)
+========================================================================
+
+TypeScript è un'estensione di JavaScript che ne aumenta la sintassi con un
+SISTEMA DI TIPI. Le sue caratteristiche distintive sono le seguenti.
+
+1) DICHIARAZIONE DEI TIPI. In TypeScript possiamo dichiarare il tipo atteso di
+   variabili, parametri e valori di ritorno delle funzioni. Questo permette al
+   programmatore di esprimere le proprie intenzioni e al compilatore di rilevare
+   discrepanze fra ciò che il programmatore intendeva e il codice effettivamente
+   scritto.
+
+2) È UN LINGUAGGIO COMPILATO (traspilato). I programmi TypeScript vengono
+   tradotti (compilati) in programmi JavaScript. Una conseguenza fondamentale è
+   che i costrutti aggiuntivi di TS sono ESCLUSIVAMENTE DICHIARATIVI e non
+   operazionali: "scompaiono" una volta effettuata la compilazione e non hanno
+   alcun impatto sull'esecuzione del codice. (A differenza di C o JavaScript,
+   dove il tipo influenza lo slot di memoria usato, in TS le dichiarazioni di
+   tipo non hanno effetto a run-time perché svaniscono nella compilazione.)
+
+3) INFERENZA DEI TIPI. TypeScript implementa un sistema di inferenza: in fase di
+   compilazione determina automaticamente il tipo risultante di espressioni e
+   funzioni, e verifica la consistenza con i tipi "promessi" (i valori di ritorno
+   dichiarati) o con il modo in cui i risultati vengono utilizzati. Non è quindi
+   sempre necessario annotare esplicitamente i tipi: spesso il compilatore li
+   deduce da solo.
+
+4) VERIFICA A COMPILE-TIME. Lo scopo delle dichiarazioni di tipo è consentire,
+   a tempo di compilazione, la verifica della consistenza dei tipi nelle
+   espressioni e negli assegnamenti. Questo permette di prevenire molti errori
+   di programmazione prima ancora di eseguire il codice.
+
+5) INTEGRAZIONE CON L'IDE. TypeScript dà il meglio di sé quando è integrato in
+   un ambiente di sviluppo: l'inferenza sui tipi viene applicata già mentre si
+   scrive il codice, senza aspettare la compilazione, permettendo di intercettare
+   gli errori in tempo reale.
+
+6) IL TIPO any. È possibile non esprimere il tipo di un'entità scrivendo che il
+   suo tipo è "any" (qualsiasi cosa). Tuttavia usare any fa perdere buona parte
+   dei vantaggi di TypeScript, quindi è da evitare, salvo i rari casi in cui si
+   deve far convivere codice TS con codice JavaScript privo di dichiarazioni.
+
+7) COSTRUTTI DI TIPO AVANZATI. TypeScript permette di esprimere tipi ricchi, tra
+   cui: unioni di tipi (es. number | string, un valore che può essere l'uno o
+   l'altro), tipi literal (es. "verificato" | "in corso di verifica", che
+   ammettono solo valori specifici), tuple (array di lunghezza fissa con tipi
+   posizionali, es. [number, number | string, "ok" | "no"]), e tipi generici
+   per definire strutture o funzioni che si comportano allo stesso modo
+   indipendentemente dal tipo (es. Set<T>, oppure una funzione max: (a: T, b: T) => T).
+
+In sintesi: TypeScript aggiunge a JavaScript un sistema di tipi statico,
+dichiarativo e verificato a compile-time, con inferenza automatica e costrutti
+avanzati (union, literal, tuple, generics); il tutto scompare dopo la
+compilazione in JavaScript, quindi migliora la sicurezza e la manutenibilità
+del codice senza cambiarne il comportamento a run-time.
+
+
+========================================================================
+DOMANDA 4 - Illustrare il pattern architetturale MVVM per come è stato
+presentato nel contesto di React
+========================================================================
+
+React supporta lo sviluppo di Single Page Application (SPA): applicazioni
+client-side costituite da un'unica pagina HTML, il cui DOM viene costantemente
+aggiornato dall'applicazione stessa tramite le librerie di React, senza
+ricaricare la pagina.
+
+L'architettura si fonda sul concetto di COMPONENTE. Un componente UI è
+caratterizzato da:
+- un aspetto grafico (il "template"), cioè come viene visualizzato, che nel
+  web lato client si traduce in una combinazione di HTML e CSS;
+- una parte o sezione del Data Model che viene visualizzata e/o modificata
+  attraverso il componente stesso.
+In React un componente è definito da una FUNZIONE (detta funzione di rendering)
+che costruisce il sottoalbero del DOM che costituirà la view del componente. I
+componenti sono scritti in JSX/TSX, un linguaggio che estende JavaScript/
+TypeScript permettendo di interpolare HTML e codice. La funzione di rendering
+genera la view a partire dai dati rilevanti per quel componente.
+
+I componenti si organizzano in GERARCHIE: un componente può essere costruito a
+partire da istanze di altri componenti (sottocomponenti). Il componente che
+contiene le istanze è detto GENITORE, e le istanze contenute sono i suoi FIGLI.
+È importante notare che non è il componente in senso astratto a essere figlio,
+ma le sue istanze: istanze diverse dello stesso componente possono avere
+genitori diversi. (Esempio classico: un menu di navigazione, dove la singola
+voce è un componente istanziato più volte, con stesso aspetto e comportamento
+ma contenuto diverso.)
+
+Il nucleo del pattern MVVM è il LEGAME (binding) fra View-Model e View, che nei
+framework è parzialmente automatizzato. Si distinguono due direzioni:
+- PROPERTY BINDING: il collegamento che permette alla View di riflettere i dati
+  del View-Model. Ogni framework adotta la propria strategia per accorgersi di
+  quando un dato cambia e aggiornare di conseguenza la view. In React questo
+  ruolo è svolto dallo STATO del componente (gestito con useState): quando lo
+  stato cambia, React invoca nuovamente la funzione di rendering e aggiorna la
+  view (re-rendering).
+- EVENT BINDING: il collegamento nella direzione opposta, dalla View verso il
+  View-Model, basato sul principio delle callback e degli event listener.
+  L'interazione dell'utente con la view genera eventi che vengono gestiti da
+  funzioni, le quali possono aggiornare lo stato/il modello.
+
+La comunicazione fra componenti avviene tramite le PROPS: un componente genitore
+passa dati ai figli attraverso le props; quando il genitore modifica il valore
+di una prop, il componente figlio viene ri-renderizzato.
+
+In sintesi: React realizza il pattern MVVM strutturando l'applicazione in
+componenti (funzioni di rendering che producono la view in JSX/TSX), organizzati
+in gerarchie genitore-figlio; il legame View <-> View-Model è realizzato tramite
+il property binding (lo stato, con useState, che innesca il re-rendering quando
+cambia) e l'event binding (callback/listener sugli eventi UI), mentre la
+comunicazione fra componenti passa per le props. Tutto questo dentro una SPA in
+cui il DOM viene aggiornato dinamicamente senza ricaricare la pagina.
+
+
+========================================================================
+DOMANDA 5 - Descrivere il ciclo di vita delle @Entity nella Java
+Persistence API (JPA) di Spring
+========================================================================
+
+Nella Java Persistence API, un'entità annotata con @Entity rappresenta la
+corrispondenza fra una classe Java e una tabella del database (mapping ORM),
+dove ogni istanza dell'entità corrisponde a un record. Durante la sua vita,
+un'entità attraversa diversi STATI, che determinano se e come le sue modifiche
+si riflettono sul DB.
+
+1) NEW (nuova). Quando un'entità viene appena creata in memoria (con new), è
+   "nuova": JPA non la gestisce e il database non sa nemmeno che esista. Le
+   modifiche ai suoi campi non hanno alcun effetto sul DB.
+
+2) MANAGED (gestita). Quando l'entità viene salvata tramite repo.save(e), viene
+   effettuata una create e l'entità diventa MANAGED. Lo stesso accade quando
+   estraiamo un'entità dal DB con un metodo del repository (es. findById): anche
+   in quel caso l'entità è managed. Finché un'entità è managed, tutte le
+   modifiche ai campi dell'oggetto si riflettono automaticamente nel DB (questo
+   meccanismo è il cosiddetto dirty checking). L'entità resta managed finché non
+   termina la transazione corrente.
+
+3) DETACHED (staccata). Al termine della transazione corrente, l'entità diventa
+   DETACHED. Da questo momento le modifiche all'oggetto non si riflettono più
+   sul DB. Per riagganciare un'entità detached posso chiamare di nuovo save:
+   poiché l'entità ha già un id presente nel DB, la save effettuerà un update
+   (anziché una create).
+
+4) REMOVED (rimossa). Quando cancelliamo un'entità con repo.delete(e), essa
+   diventa REMOVED: non appena la transazione termina, l'entità scompare dal DB.
+
+Un punto cruciale è QUANDO termina una transazione. Se non specificato
+altrimenti, la transazione è limitata al singolo metodo del repository: quindi
+se chiamo repo.save(e), durante l'esecuzione di save l'entità è managed, ma
+appena save restituisce, non lo è più (diventa subito detached). Lo stesso vale
+per findById e gli altri metodi di ricerca.
+
+Per avere una transazione PIÙ DURATURA si usa l'annotazione @Transactional. Un
+metodo @Transactional garantisce che le entità restino managed FINO AL TERMINE
+DEL METODO stesso; di conseguenza le modifiche operate su di esse vengono o
+trasferite nel DB (committed) al termine del metodo se ha successo, o annullate
+(rollback) se il metodo fallisce. È per questo che i metodi di un @Service sono
+tipicamente @Transactional. (Nota: perché la transazione sia effettiva, il
+metodo @Transactional deve essere invocato da un altro componente che inietta
+il servizio tramite dependency injection.)
+
+Sul comportamento di save è bene precisare: save può fare due cose diverse ->
+persist se l'entità non ha un id (aggiorna direttamente l'oggetto fornito in
+input), oppure merge se l'entità ha già un id (recupera dal DB una versione
+managed dell'entità, la aggiorna con i valori della versione detached e
+restituisce la nuova entità recuperata). Quindi in alcuni casi save restituisce
+un oggetto diverso da quello ricevuto in input, ed è buona norma lavorare con
+l'entità restituita da save.
+
+In sintesi: il ciclo di vita è new -> managed -> detached (con removed per le
+cancellazioni). Solo nello stato managed le modifiche si riflettono sul DB, e
+lo stato managed dura quanto la transazione; @Transactional serve ad allungare
+la transazione all'intero metodo, garantendo commit al successo o rollback al
+fallimento.
+
+
+========================================================================
+DOMANDA 6 - Illustrare le macrocategorie in cui è possibile suddividere
+le funzionalità offerte dalla DOM API del browser
+========================================================================
+
+Il DOM (Document Object Model) è la rappresentazione ad albero di un documento
+HTML: contiene un nodo radice, nodi intermedi (elementi HTML) e foglie (testo,
+commenti). La DOM API è una SPECIFICA (stabilita dal W3C) di come deve essere
+il servizio di interrogazione e aggiornamento del DOM; poiché tale servizio è
+offerto ai programmatori JavaScript dai browser, sono i browser a giocare il
+ruolo di fornitori e a doversi attenere alla specifica. La DOM API è costituita
+da un insieme di interfacce e dagli oggetti che le implementano (uno su tutti il
+DOM stesso e gli elementi che lo compongono); essendo "solo" una specifica, non
+definisce classi né componenti imperative.
+
+Le funzionalità della DOM API si possono raggruppare in tre grandi macrocategorie.
+
+1) NAVIGAZIONE / INTERROGAZIONE DELL'ALBERO. Permette di esplorare la struttura
+   del documento e di reperire gli elementi su cui si vuole intervenire.
+   Partendo da "document" (che rappresenta tutto l'albero), si può risalire alla
+   radice o accedere direttamente a head e body, e ci si può muovere tra genitori
+   e figli. Per selezionare elementi si usano metodi come getElementById(id) (che
+   restituisce l'elemento con quell'id, o null), oppure metodi basati su classe o
+   su selettori CSS (querySelector e simili). Alcuni di questi metodi restituiscono
+   collezioni "live" (HTMLCollection / NodeList), ossia strutture che si aggiornano
+   insieme al DOM: se un elemento viene aggiunto o rimosso, la collezione riflette
+   la modifica (per avere risultati aggiornati con altri metodi occorre invece
+   ripetere la query).
+
+2) MODIFICA DELL'ALBERO E DEL SUO CONTENUTO. Permette di alterare la struttura e
+   i contenuti del documento. Si possono creare nuovi elementi (non ancora
+   inseriti nell'albero), aggiungerli specificando dove collocarli, rimuovere
+   elementi esistenti, e modificare il contenuto degli elementi (ad esempio il
+   testo o l'HTML interno). Rientra qui anche la manipolazione degli stili e
+   delle classi CSS degli elementi (aggiungere, rimuovere o fare il toggle di una
+   classe). Modificare il DOM in questo modo è diverso dal semplice display:none:
+   si può proprio smontare/rimontare un elemento dall'albero.
+
+3) GESTIONE DEGLI EVENTI (aggiunta di listener). Permette di reagire agli eventi,
+   in particolare quelli generati dall'interazione dell'utente con la UI. Si
+   registrano funzioni (listener) associate a una specifica tipologia di evento e
+   a uno specifico elemento (target): il listener verrà invocato quando quell'
+   evento si verifica su quell'elemento, ricevendo le informazioni dettagliate
+   sull'evento. Questa categoria è gestita tramite l'interfaccia EventTarget.
+   Gli eventi UI sono per natura asincroni (possono avvenire in qualunque momento)
+   e vanno gestiti tenendone conto.
+
+Queste tre categorie si combinano nello schema tipico della programmazione di una
+UI in "vanilla JavaScript": (1) trovare nel DOM gli elementi su cui intervenire
+[navigazione], (2) registrare su di essi dei listener [eventi], (3) quando
+l'evento si verifica, modificare opportunamente il DOM [modifica].
+
+In sintesi: la DOM API, specifica W3C implementata dai browser, offre tre
+macrocategorie di funzionalità -> navigare/interrogare l'albero del DOM,
+modificarne struttura e contenuto (inclusi stili e classi CSS), e gestire gli
+eventi tramite la registrazione di listener sull'interfaccia EventTarget.
+
+
+========================================================================
+DOMANDA 7 - Spiegare perché nelle applicazioni server-side è importante il
+concetto di "sessione" e come esso viene implementato tramite i cookie
+========================================================================
+
+PERCHÉ SERVE LA SESSIONE. Quando c'è un'interazione prolungata fra due parti
+(un utente e un'applicazione, un client e un server), diventa rilevante il
+concetto di SESSIONE: l'idea cioè che la "conversazione" abbia uno stato e uno
+storico, così che in ogni passo si possa fare riferimento a quanto già detto e
+fatto, senza dover ogni volta ricapitolare i passi precedenti.
+
+Il problema è che il protocollo HTTP è di per sé STATELESS: non prevede alcuna
+idea di stato dello scambio, e ogni transazione HTTP (richiesta + risposta) è
+indipendente dalle altre. In più, un server HTTP gestisce contemporaneamente
+molte conversazioni con client diversi, quindi ha bisogno di un modo per
+capire, ad ogni richiesta, con quale conversazione ha a che fare. L'unico modo
+di "simulare" l'esistenza di uno stato sarebbe riportare ad ogni passo tutte le
+informazioni rilevanti scambiate in precedenza: la sessione serve proprio a
+risolvere questo problema in modo efficiente.
+(Esempio tipico: un carrello della spesa su un sito di e-commerce. Se aggiungo un
+prodotto e poi navigo altrove, il server deve "ricordare" cosa ho nel carrello:
+è lo stato della sessione.)
+
+COME SI IMPLEMENTA CON I COOKIE. Uno dei modi più semplici per tenere traccia di
+una sessione è tramite i cookie. Un COOKIE è un blocco di dati che il server
+manda al client nel corso del PRIMO scambio della loro conversazione; ad ogni
+scambio successivo, il client aggiunge automaticamente il cookie alla propria
+richiesta, in modo che il server possa identificare il particolare thread di
+conversazione che sta avendo con quel client.
+
+Il server potrebbe memorizzare le informazioni direttamente nel cookie, ma di
+solito si fa diversamente: nel cookie si memorizzano solo le informazioni
+necessarie a riconoscere l'utente e a identificare univocamente la conversazione
+(un id di sessione), mentre lo stato vero e proprio viene conservato sul server,
+in memoria o nel DB, indicizzato a partire da quell'id univoco. In questo modo si
+evita di appesantire troppo le richieste e le risposte HTTP.
+
+IMPLEMENTAZIONE IN SPRING BOOT. Per attivare i cookie di sessione si configura il
+file application.properties, dando un nome al cookie e impostandolo come:
+- http-only: il browser e il codice client-side non hanno accesso ai contenuti
+  del cookie (protezione da accessi via JavaScript);
+- secure: il cookie viene trasmesso in forma cifrata.
+Per lavorare con la sessione nel codice si inietta nei request handler l'oggetto
+HttpSession, tramite il quale si può: scrivere nel cookie (session.setAttribute),
+leggere (session.getAttribute), invalidare la sessione (session.invalidate) e
+impostarne il timeout (session.setMaxInactiveInterval). Il timeout indica per
+quanto tempo il cookie può restare inutilizzato prima di non essere più valido.
+
+COLLABORAZIONE DEL CLIENT. Perché il meccanismo funzioni, l'applicazione
+client-side deve rimandare il cookie ad ogni richiesta. Questo è il comportamento
+di default del browser solo per richieste same-origin; in una situazione
+cross-origin, per default le credenziali non vengono inviate. Per ottenerne
+l'invio bisogna specificare nelle opzioni della fetch credentials: "include"
+(il default è "same-origin"); lato server, questo richiede a sua volta di
+configurare opportunamente il CORS con @CrossOrigin(allowCredentials = "true")
+ed elencare esplicitamente le origini ammesse (whitelist), perché per sicurezza
+non è più ammesso abilitare tutte le origini in modo acritico.
+
+In sintesi: la sessione serve a dare uno stato a una conversazione che avviene
+su un protocollo (HTTP) intrinsecamente stateless; si implementa con un cookie
+che il server invia al primo scambio e che il client rimanda ad ogni richiesta
+successiva; nel cookie si tiene di norma solo un id di sessione, mentre lo stato
+resta sul server indicizzato da quell'id. In Spring Boot si gestisce tramite
+HttpSession, con cookie http-only e secure, e attenzione al CORS nel caso
+cross-origin.
+
+
+========================================================================
+DOMANDA 8 - Spiegare la differenza concettuale fra la distinzione
+"client-side/server-side" e la distinzione "front-end/back-end"
+========================================================================
+
+Le due coppie di termini vengono spesso usate come sinonimi, ma esprimono in
+realtà due distinzioni concettualmente diverse: una riguarda DOVE il codice
+viene eseguito, l'altra riguarda QUALE RUOLO/RESPONSABILITÀ il codice svolge
+nell'applicazione.
+
+CLIENT-SIDE / SERVER-SIDE: è una distinzione basata sul LUOGO DI ESECUZIONE.
+- Un'applicazione (o una porzione di codice) è detta CLIENT-SIDE quando viene
+  eseguita dal Web Client, ossia dal browser. Ogni browser contiene un motore
+  di esecuzione per JavaScript: quando arriva una pagina HTML corredata di
+  script, il browser lo esegue, e in questo modo la pagina può trasformarsi
+  nella user interface di un vero e proprio applicativo eseguito lato client.
+- Un'applicazione (o porzione di codice) è detta SERVER-SIDE quando viene
+  eseguita all'interno del Web Server (che contiene un agente di esecuzione per
+  il linguaggio usato, ad esempio una JVM per Java). Un applicativo server-side
+  risponde a determinate richieste HTTP su determinate URL, attiva una funzione
+  di calcolo (in base a path, query string ed eventuali dati POST), e incapsula
+  l'output in una risposta HTTP da restituire al client.
+Il criterio, quindi, è puramente "dove gira il codice": sulla macchina
+dell'utente (browser) o sulla macchina che fa da host (server).
+
+FRONT-END / BACK-END: è una distinzione basata sul RUOLO e sulle
+RESPONSABILITÀ.
+- Il FRONT-END è la parte dell'applicazione che si occupa dell'interfaccia con
+  l'utente: ciò che l'utente vede e con cui interagisce (la user interface, fatta
+  di HTML, CSS ed eventuale interattività). Il suo compito è presentare le
+  informazioni e raccogliere le azioni dell'utente.
+- Il BACK-END è la parte che si occupa della logica applicativa (business logic)
+  e della gestione/persistenza dei dati. È il back-end a detenere il Data Model
+  ed è considerato la "source of truth" per i dati: elabora le informazioni, le
+  conserva nel database, e costruisce sopra di esse i servizi dell'applicazione.
+Il criterio, qui, è "di cosa si occupa il codice": presentazione e interazione
+(front-end) oppure logica e dati (back-end).
+
+PERCHÉ NON COINCIDONO. Le due distinzioni tendono a sovrapporsi perché nella
+pratica il front-end è tipicamente client-side (l'interfaccia gira nel browser)
+e il back-end è tipicamente server-side (logica e dati girano sul server). Ma la
+sovrapposizione non è una regola: sono concetti indipendenti. Ad esempio, del
+codice può girare lato server (server-side) pur avendo un ruolo di front-end:
+è il caso della generazione dinamica di pagine HTML lato server (si pensi a un
+CMS come Wordpress o Moodle, dove il back-end genera direttamente le pagine da
+presentare all'utente). In quel caso la logica di presentazione è server-side
+ma svolge un ruolo di front-end. Viceversa, parte della logica applicativa può
+essere spostata lato client.
+
+In sintesi: "client-side vs server-side" risponde alla domanda DOVE viene
+eseguito il codice (nel browser o nel server); "front-end vs back-end" risponde
+alla domanda QUAL È IL RUOLO del codice (interfaccia utente o logica+dati).
+Spesso front-end coincide con client-side e back-end con server-side, ma sono
+dimensioni distinte e non necessariamente sovrapposte (es. una pagina HTML
+generata dinamicamente lato server è front-end ma server-side).
