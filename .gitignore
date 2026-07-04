@@ -11,6 +11,8 @@
 !*.html
 !*.htl
 !*tex
+!.txt
+!.md
 
 # 4. Non ignorare il file .gitignore stesso
 !.gitignore
