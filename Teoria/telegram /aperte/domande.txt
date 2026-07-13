@@ -97,7 +97,7 @@ Client-side / server-side dipende da dove gira il codice: client-side è eseguit
 Front-end / back-end dipende dal ruolo, in un'architettura a strati: il front-end è lo strato che interagisce con l'utente (la user interface), il back-end è lo strato che gestisce la logica e la persistenza dei dati.
 
 ========================================================================
-DOMANDA 8 - Spiegare cosa sono le interface in TypeScript, qual è il 
+DOMANDA 9 - Spiegare cosa sono le interface in TypeScript, qual è il 
 loro ruolo rispetto ai controlli di tipo operati da TypeScript, 
 e perché in Javascript un tale costrutto non avrebbe senso
 ========================================================================
