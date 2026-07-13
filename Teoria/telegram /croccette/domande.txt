@@ -159,7 +159,7 @@ A) L'annotazione @Transactional fa sì che al termine dell'esecuzione del metodo
 B) L'annotazione @Transactional garantisce che tutte le entità managed su cui il metodo opera restino tali (ossia managed) per tutta l'esecuzione del metodo, e le modifiche ad esse si riflettano nel DB quando la transazione termina con successo
 C) L'annotazione @Transactional fa sì che tutte le entità create al suo interno siano transitorie, ossia restino salvate nel DB solo per la durata dell'esecuzione del metodo, per venire poi eliminate quando esso termina
 D) L'annotazione @Transactional fa sì che tutte le entità salvate nel DB all'interno del metodo vengano salvate con un nuovo id, a prescindere che ne avessero o meno uno in precedenza
-CORRETTA: A
+CORRETTA: B
 ---
 D: In una transazione HTTP, qual è il ruolo del numero di porta all'interno della URL?
 A) Permettere all'host ricevente di consegnare la richiesta HTTP al servizio corrispondente alla porta specificata
