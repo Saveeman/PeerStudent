@@ -95,3 +95,13 @@ DOMANDA 8 - Spiegare la differenza concettuale fra la distinzione
 Le due distinzioni riguardano cose diverse: una il luogo di esecuzione, l'altra il ruolo.
 Client-side / server-side dipende da dove gira il codice: client-side è eseguito dal browser, server-side è eseguito dal Web Server.
 Front-end / back-end dipende dal ruolo, in un'architettura a strati: il front-end è lo strato che interagisce con l'utente (la user interface), il back-end è lo strato che gestisce la logica e la persistenza dei dati.
+
+========================================================================
+DOMANDA 8 - Spiegare cosa sono le interface in TypeScript, qual è il 
+loro ruolo rispetto ai controlli di tipo operati da TypeScript, 
+e perché in Javascript un tale costrutto non avrebbe senso
+========================================================================
+
+Le interface in TypeScript sono un costrutto puramente dichiarativo: un elenco di proprietà, anche opzionali, il cui nome definisce un tipo.
+Ruolo nei controlli di tipo: garantiscono a compile-time che gli oggetti abbiano determinate proprietà — utile perché in JS/TS gli oggetti si creano spesso senza costruttori. 
+In JavaScript non avrebbero senso perché JS è dinamicamente tipato: i tipi esistono solo a run-time e non c'è controllo statico né compilazione. Le interface servono solo al controllo statico e scompaiono compilando: in JS nessuno le leggerebbe.
