@@ -37,7 +37,7 @@ TypeScript aumenta la sintassi di javascript con un sistema di tipi,
 TypeScript si compila, i programmi TS vengano tradotti in programmi JS,
 TypeScript implementa un sistema di inferenza dei tipi, ed e al suo meglio quando itegrato in un IDE.
 
- Fonte: TWeb-02d-Typescript-2526-STAMPA.pdf
+Fonte: TWeb-02d-Typescript-2526-STAMPA.pdf
 
 ========================================================================
 DOMANDA 4 - Illustrare il pattern architetturale MVVM per come è stato
@@ -94,7 +94,8 @@ DOMANDA 8 - Spiegare la differenza concettuale fra la distinzione
 
 Le due distinzioni riguardano cose diverse: una il luogo di esecuzione, l'altra il ruolo.
 Client-side / server-side dipende da dove gira il codice: client-side è eseguito dal browser, server-side è eseguito dal Web Server.
-Front-end / back-end dipende dal ruolo, in un'architettura a strati: il front-end è lo strato che interagisce con l'utente (la user interface), il back-end è lo strato che gestisce la logica e la persistenza dei dati.
+Front-end / back-end dipende dal ruolo, in un'architettura a strati: il front-end è lo strato che interagisce con l'utente (la user interface), 
+il back-end è lo strato che gestisce la logica e la persistenza dei dati.
 
 ========================================================================
 DOMANDA 9 - Spiegare cosa sono le interface in TypeScript, qual è il 
