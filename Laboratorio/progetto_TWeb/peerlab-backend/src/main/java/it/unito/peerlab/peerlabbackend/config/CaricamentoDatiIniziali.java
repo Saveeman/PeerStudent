@@ -5,6 +5,7 @@ import it.unito.peerlab.peerlabbackend.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -51,125 +52,204 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
             return;
         }
 
-        System.out.println(">>> Caricamento dati iniziali di PeerLab...");
+        System.out.println(">>> Caricamento dati iniziali di PeerStudent...");
 
-        // ------------------------------------------------------------ UTENTI
+        // ------------------------------------------------------------ TUTOR
         Utente giulia = new Utente("Giulia", "Rossi", "giulia", "giulia123",
-                "giulia.rossi@edu.unito.it", Ruolo.TUTOR,
-                "Terzo anno di Informatica. Ho superato Analisi I con 30 e mi piace spiegare.");
+                "giulia.rossi@edu.unito.it", "912345", Ruolo.TUTOR, LocalDate.of(2003, 4, 12),
+                "Terzo anno di Informatica. Ho superato Analisi Matematica con 30 e mi piace spiegare.");
 
         Utente davide = new Utente("Davide", "Poli", "davide", "davide123",
-                "davide.poli@edu.unito.it", Ruolo.TUTOR,
-                "Studente magistrale. Tengo ripassi di Algoritmi e Tecnologie Web.");
+                "davide.poli@edu.unito.it", "884120", Ruolo.TUTOR, LocalDate.of(2001, 9, 3),
+                "Studente magistrale. Tengo ripassi di Algoritmi e Sviluppo Applicazioni Software.");
 
+        Utente elena = new Utente("Elena", "Ferraro", "elena", "elena123",
+                "elena.ferraro@edu.unito.it", "901877", Ruolo.TUTOR, LocalDate.of(2002, 11, 27),
+                "Al secondo anno. Analisi e' stato il mio primo 30 e lode, ci tengo a passarlo avanti.");
+
+        Utente luca = new Utente("Luca", "Bertino", "luca", "luca123",
+                "luca.bertino@edu.unito.it", "873094", Ruolo.TUTOR, LocalDate.of(2000, 2, 18),
+                "Magistrale in Informatica. Mi occupo di strutture dati e complessita'.");
+
+        Utente chiara = new Utente("Chiara", "Amato", "chiara", "chiara123",
+                "chiara.amato@edu.unito.it", "889231", Ruolo.TUTOR, LocalDate.of(2001, 6, 30),
+                "Ho seguito SAS lo scorso anno: UML e testing sono il mio pane.");
+
+        Utente matteo = new Utente("Matteo", "Riva", "matteo", "matteo123",
+                "matteo.riva@edu.unito.it", "905612", Ruolo.TUTOR, LocalDate.of(2002, 1, 9),
+                "Terzo anno. Mi trovo bene a spiegare progettazione software e design pattern.");
+
+        // --------------------------------------------------------- STUDENTI
         Utente marco = new Utente("Marco", "Bianchi", "marco", "marco123",
-                "marco.bianchi@edu.unito.it", Ruolo.STUDENTE,
-                "Matricola, primo anno di Informatica.");
+                "marco.bianchi@edu.unito.it", "998204", Ruolo.STUDENTE, LocalDate.of(2005, 3, 21),
+                "Primo anno di Informatica, sto ancora prendendo le misure.");
 
         Utente sara = new Utente("Sara", "Melis", "sara", "sara123",
-                "sara.melis@edu.unito.it", Ruolo.STUDENTE,
+                "sara.melis@edu.unito.it", "974558", Ruolo.STUDENTE, LocalDate.of(2004, 7, 14),
                 "Secondo anno, fuori sede.");
 
-        utenteRepository.saveAll(List.of(giulia, davide, marco, sara));
+        utenteRepository.saveAll(
+                List.of(giulia, davide, elena, luca, chiara, matteo, marco, sara));
 
         // ----------------------------------------------------------- MATERIE
-        Materia analisi = new Materia("Analisi Matematica I", "MFN0577", 1);
+        Materia analisi = new Materia("Analisi Matematica", "MFN0577", 1);
         Materia algoritmi = new Materia("Algoritmi e Strutture Dati", "MFN0578", 2);
-        Materia tweb = new Materia("Tecnologie Web", "MFN0634", 3);
-        Materia statistica = new Materia("Elementi di Probabilita' e Statistica", "MFN0579", 2);
+        Materia sas = new Materia("Sviluppo Applicazioni Software", "MFN0596", 2);
 
-        materiaRepository.saveAll(List.of(analisi, algoritmi, tweb, statistica));
+        materiaRepository.saveAll(List.of(analisi, algoritmi, sas));
 
         // --------------------------------------------------------- ARGOMENTI
         Argomento integrali = new Argomento("Integrali per parti e per sostituzione", analisi);
         Argomento limiti = new Argomento("Limiti notevoli", analisi);
         Argomento serie = new Argomento("Serie numeriche", analisi);
+        Argomento studioFunzione = new Argomento("Studio di funzione", analisi);
+
         Argomento grafi = new Argomento("Visite di grafi: BFS e DFS", algoritmi);
         Argomento ricorrenze = new Argomento("Ricorrenze e Master Theorem", algoritmi);
-        Argomento promise = new Argomento("Promise e async/await", tweb);
-        Argomento springBoot = new Argomento("Spring Boot e JPA", tweb);
-        Argomento distribuzioni = new Argomento("Distribuzioni notevoli", statistica);
+        Argomento ordinamento = new Argomento("Algoritmi di ordinamento", algoritmi);
+        Argomento alberi = new Argomento("Alberi binari di ricerca", algoritmi);
 
-        argomentoRepository.saveAll(List.of(integrali, limiti, serie, grafi,
-                ricorrenze, promise, springBoot, distribuzioni));
+        Argomento uml = new Argomento("Diagrammi UML e casi d'uso", sas);
+        Argomento pattern = new Argomento("Design pattern", sas);
+        Argomento testing = new Argomento("Testing e JUnit", sas);
+        Argomento versionamento = new Argomento("Git e lavoro in team", sas);
+
+        argomentoRepository.saveAll(List.of(integrali, limiti, serie, studioFunzione,
+                grafi, ricorrenze, ordinamento, alberi,
+                uml, pattern, testing, versionamento));
 
         // ---------------------------------------------------------- SESSIONI
-        Sessione s1 = new Sessione(
+        // Ogni materia ha piu' appuntamenti, ciascuno con un tutor diverso,
+        // distribuiti fra online e sedi in presenza.
+
+        // --- Analisi Matematica
+        Sessione a1 = new Sessione(
                 "Integrali per parti e per sostituzione",
                 "Ripasso della teoria con esercizi tratti dagli appelli degli ultimi due anni. "
                         + "Portate carta e penna, si lavora insieme alla lavagna.",
-                LocalDateTime.now().plusDays(4).withHour(14).withMinute(0).withSecond(0).withNano(0),
-                "Aula studio Povo 1",
+                fraGiorni(4, 14, 0), "Sala studio Edisu",
                 ModalitaSessione.PRESENZA, 4, StatoSessione.APERTA, giulia, analisi);
-        s1.setArgomenti(Set.of(integrali));
+        a1.setArgomenti(Set.of(integrali));
 
-        Sessione s2 = new Sessione(
+        Sessione a2 = new Sessione(
                 "Limiti notevoli: esercizi d'esame",
-                "Sessione online dedicata ai limiti notevoli, con svolgimento guidato di esercizi.",
-                LocalDateTime.now().plusDays(6).withHour(10).withMinute(30).withSecond(0).withNano(0),
-                "Link Meet inviato agli iscritti",
-                ModalitaSessione.ONLINE, 6, StatoSessione.APERTA, giulia, analisi);
-        s2.setArgomenti(Set.of(limiti));
+                "Svolgimento guidato dei limiti piu' ricorrenti nei compiti, con i trucchi "
+                        + "per riconoscere subito la forma indeterminata.",
+                fraGiorni(6, 10, 30), "Online",
+                ModalitaSessione.ONLINE, 6, StatoSessione.APERTA, elena, analisi);
+        a2.setArgomenti(Set.of(limiti));
 
-        Sessione s3 = new Sessione(
-                "Promise, async/await e fetch API",
-                "Come funziona davvero l'asincronia in JavaScript: dai callback alle Promise, "
-                        + "fino ad async/await. Con esempi pratici di chiamate a una API REST.",
-                LocalDateTime.now().plusDays(3).withHour(16).withMinute(0).withSecond(0).withNano(0),
-                "Laboratorio informatico 2",
-                ModalitaSessione.PRESENZA, 5, StatoSessione.APERTA, davide, tweb);
-        s3.setArgomenti(Set.of(promise));
+        Sessione a3 = new Sessione(
+                "Studio di funzione dalla A alla Z",
+                "Un esercizio completo svolto passo passo: dominio, asintoti, derivate, grafico.",
+                fraGiorni(9, 16, 0), "Aula A",
+                ModalitaSessione.PRESENZA, 5, StatoSessione.APERTA, giulia, analisi);
+        a3.setArgomenti(Set.of(studioFunzione));
 
-        Sessione s4 = new Sessione(
+        // --- Algoritmi e Strutture Dati
+        Sessione b1 = new Sessione(
                 "Ricorrenze e Master Theorem",
                 "Metodo di sostituzione, albero di ricorsione e Master Theorem: quando usare cosa.",
-                LocalDateTime.now().plusDays(8).withHour(15).withMinute(0).withSecond(0).withNano(0),
-                "Aula studio Povo 2",
+                fraGiorni(5, 15, 0), "Aula B",
                 ModalitaSessione.PRESENZA, 3, StatoSessione.APERTA, davide, algoritmi);
-        s4.setArgomenti(Set.of(ricorrenze));
+        b1.setArgomenti(Set.of(ricorrenze));
 
-        Sessione s5 = new Sessione(
-                "Spring Boot: entita', repository e controller",
-                "Panoramica pratica sullo sviluppo di un back-end con Spring Boot e JPA.",
-                LocalDateTime.now().minusDays(5).withHour(11).withMinute(0).withSecond(0).withNano(0),
-                "Laboratorio informatico 1",
-                ModalitaSessione.PRESENZA, 4, StatoSessione.COMPLETATA, davide, tweb);
-        s5.setArgomenti(Set.of(springBoot));
+        Sessione b2 = new Sessione(
+                "Visite di grafi: BFS e DFS",
+                "Come si scrivono, come si ricordano, e come si riconosce quale serve "
+                        + "in un esercizio d'esame.",
+                fraGiorni(7, 11, 0), "Online",
+                ModalitaSessione.ONLINE, 8, StatoSessione.APERTA, luca, algoritmi);
+        b2.setArgomenti(Set.of(grafi));
 
-        sessioneRepository.saveAll(List.of(s1, s2, s3, s4, s5));
+        Sessione b3 = new Sessione(
+                "Alberi binari di ricerca e ordinamento",
+                "Inserimento, cancellazione, bilanciamento. Nella seconda parte confronto "
+                        + "fra gli algoritmi di ordinamento e le rispettive complessita'.",
+                fraGiorni(11, 14, 30), "Sala studio Edisu",
+                ModalitaSessione.PRESENZA, 4, StatoSessione.APERTA, luca, algoritmi);
+        b3.setArgomenti(Set.of(alberi, ordinamento));
+
+        // --- Sviluppo Applicazioni Software
+        Sessione c1 = new Sessione(
+                "Diagrammi UML e casi d'uso",
+                "Dalla richiesta del committente al diagramma: come si individuano attori, "
+                        + "scenari e casi d'uso senza perdersi.",
+                fraGiorni(3, 9, 30), "Aula A",
+                ModalitaSessione.PRESENZA, 6, StatoSessione.APERTA, chiara, sas);
+        c1.setArgomenti(Set.of(uml));
+
+        Sessione c2 = new Sessione(
+                "Design pattern piu' richiesti all'esame",
+                "Singleton, Observer, Strategy e Factory spiegati con esempi di codice "
+                        + "e con gli errori tipici da evitare.",
+                fraGiorni(8, 17, 0), "Online",
+                ModalitaSessione.ONLINE, 10, StatoSessione.APERTA, matteo, sas);
+        c2.setArgomenti(Set.of(pattern));
+
+        Sessione c3 = new Sessione(
+                "Testing con JUnit e uso di Git in team",
+                "Scrivere test che servono davvero, e gestire branch e conflitti senza panico.",
+                fraGiorni(12, 15, 30), "Aula B",
+                ModalitaSessione.PRESENZA, 5, StatoSessione.APERTA, chiara, sas);
+        c3.setArgomenti(Set.of(testing, versionamento));
+
+        // --- una sessione gia' svolta, per poter mostrare le valutazioni
+        Sessione conclusa = new Sessione(
+                "Serie numeriche: criteri di convergenza",
+                "Confronto, rapporto, radice: quale criterio applicare e perche'.",
+                LocalDateTime.now().minusDays(6).withHour(11).withMinute(0)
+                        .withSecond(0).withNano(0),
+                "Aula A",
+                ModalitaSessione.PRESENZA, 4, StatoSessione.COMPLETATA, elena, analisi);
+        conclusa.setArgomenti(Set.of(serie));
+
+        sessioneRepository.saveAll(List.of(a1, a2, a3, b1, b2, b3, c1, c2, c3, conclusa));
 
         // ------------------------------------------------------- PRENOTAZIONI
-        // Marco ha una richiesta accettata su s1 e una ancora in attesa su s3
         Prenotazione p1 = new Prenotazione(StatoPrenotazione.ACCETTATA,
-                LocalDateTime.now().minusDays(1), "Sono fermo sugli integrali per parti.",
-                marco, s1);
+                LocalDateTime.now().minusDays(1),
+                "Sono fermo sugli integrali per parti, non capisco come scegliere le due parti.",
+                null, marco, a1);
 
         Prenotazione p2 = new Prenotazione(StatoPrenotazione.IN_ATTESA,
-                LocalDateTime.now().minusHours(3), "Vorrei chiarimenti sulle Promise.",
-                marco, s3);
+                LocalDateTime.now().minusHours(3),
+                "Vorrei ripassare i limiti notevoli prima dell'appello di settembre.",
+                "marco.bianchi@edu.unito.it", marco, a2);
 
-        // Sara ha una richiesta in attesa su s1 e una accettata sulla sessione conclusa
         Prenotazione p3 = new Prenotazione(StatoPrenotazione.IN_ATTESA,
-                LocalDateTime.now().minusHours(6), "Posso partecipare anche io?",
-                sara, s1);
+                LocalDateTime.now().minusHours(6),
+                "Ho problemi con il Master Theorem, in particolare con il terzo caso.",
+                null, sara, b1);
 
         Prenotazione p4 = new Prenotazione(StatoPrenotazione.ACCETTATA,
-                LocalDateTime.now().minusDays(7), "Interessata alla parte su JPA.",
-                sara, s5);
+                LocalDateTime.now().minusDays(8),
+                "Non riesco a distinguere quando usare il criterio del rapporto.",
+                null, sara, conclusa);
 
         prenotazioneRepository.saveAll(List.of(p1, p2, p3, p4));
 
         // --------------------------------------------------------- MATERIALI
         materialeRepository.saveAll(List.of(
                 new MaterialeDidattico("Esercizi svolti sugli integrali",
-                        "https://esempio.unito.it/esercizi-integrali.pdf", "PDF", s1),
-                new MaterialeDidattico("Slide su Promise e async/await",
-                        "https://esempio.unito.it/promise-slide.pdf", "PDF", s3)
+                        "https://esempio.unito.it/esercizi-integrali.pdf", "PDF", a1),
+                new MaterialeDidattico("Schema dei design pattern",
+                        "https://esempio.unito.it/pattern-schema.pdf", "PDF", c2)
         ));
 
         System.out.println(">>> Dati iniziali caricati:");
-        System.out.println("    4 utenti  | tutor: giulia/giulia123, davide/davide123");
-        System.out.println("              | studenti: marco/marco123, sara/sara123");
-        System.out.println("    4 materie | 8 argomenti | 5 sessioni | 4 prenotazioni");
+        System.out.println("    tutor:    giulia, davide, elena, luca, chiara, matteo  (password: nome+123)");
+        System.out.println("    studenti: marco/marco123, sara/sara123");
+        System.out.println("    3 materie | 12 argomenti | 10 sessioni | 4 prenotazioni");
+    }
+
+    /** Costruisce una data futura a partire da oggi, con ora e minuti indicati. */
+    private LocalDateTime fraGiorni(int giorni, int ora, int minuti) {
+        return LocalDateTime.now()
+                .plusDays(giorni)
+                .withHour(ora)
+                .withMinute(minuti)
+                .withSecond(0)
+                .withNano(0);
     }
 }

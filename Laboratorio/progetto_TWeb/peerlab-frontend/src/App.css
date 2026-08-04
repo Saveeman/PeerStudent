@@ -1,14 +1,15 @@
 /* ============================================================
-   PeerLab - foglio di stile principale
+   PeerStudent - foglio di stile principale
    ============================================================ */
 
 :root {
-  --colore-primario: #2f5d50;
-  --colore-primario-chiaro: #e8f0ed;
+  --colore-primario: #9b1b1b;
+  --colore-primario-scuro: #741414;
+  --colore-primario-chiaro: #fbeceb;
   --colore-testo: #1c1c1c;
   --colore-testo-tenue: #6b6b6b;
-  --colore-bordo: #e0ddd6;
-  --colore-sfondo: #faf8f5;
+  --colore-bordo: #e4dedd;
+  --colore-sfondo: #faf7f6;
   --colore-superficie: #ffffff;
   --colore-errore: #b3261e;
   --colore-attesa: #9a6a00;
@@ -35,27 +36,72 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  /* Sfondo di base bordeaux profondo/elegante */
+  background-color: #2b0b0e;
+}
+
+/* Sfera di luce 1: Rosso vivo in alto a sinistra */
+.login-contenitore::before {
+  content: "";
+  position: absolute;
+  width: 650px;
+  height: 650px;
+  top: -200px;
+  left: -150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 32, 32, 0.85) 0%, rgba(155, 27, 27, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+/* Sfera di luce 2: Sfumatura arancio/corallo calda in basso a destra per dare contrasto e movimento */
+.login-contenitore::after {
+  content: "";
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  bottom: -250px;
+  right: -150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 86, 36, 0.65) 0%, rgba(116, 20, 20, 0) 70%);
+  filter: blur(70px);
+  pointer-events: none;
 }
 
 .login-riquadro {
+  position: relative;
+  z-index: 1;
   background: var(--colore-superficie);
+  border: none;
   border: 1px solid var(--colore-bordo);
   border-radius: var(--raggio);
   padding: 36px 32px;
   width: 100%;
   max-width: 400px;
+  box-shadow: 0 12px 32px rgba(155, 27, 27, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.login-marchio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.login-logo {
+  width: 58px;
+  height: 58px;
 }
 
 .login-titolo {
   margin: 0;
   font-size: 30px;
   color: var(--colore-primario);
-}
-
-.login-sottotitolo {
-  margin: 4px 0 28px;
-  color: var(--colore-testo-tenue);
-  font-size: 14px;
+  letter-spacing: -0.5px;
 }
 
 .login-aiuto {
@@ -712,4 +758,323 @@ body {
   padding: 14px;
   background: var(--colore-sfondo);
   border-radius: 8px;
+}
+
+/* ------------------------------------------- SUGGERIMENTI DI RICERCA */
+
+.ricerca-campo {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+}
+
+.tendina-suggerimenti {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  background: var(--colore-superficie);
+  border: 1px solid var(--colore-bordo);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.suggerimento {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--colore-testo);
+  cursor: pointer;
+}
+
+.suggerimento:hover {
+  background: var(--colore-primario-chiaro);
+  color: var(--colore-primario);
+}
+
+/* --------------------------------------------------- PROFILO UTENTE */
+
+.bottone-profilo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--colore-testo);
+  cursor: pointer;
+}
+
+.bottone-profilo:hover {
+  background: var(--colore-primario-chiaro);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--colore-primario);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.avatar-piccolo {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.profilo-intestazione {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.profilo-intestazione .modale-titolo {
+  margin-bottom: 4px;
+}
+
+.profilo-dati {
+  padding: 14px 0;
+  border-top: 1px solid var(--colore-bordo);
+  border-bottom: 1px solid var(--colore-bordo);
+}
+
+/* ------------------------------------------------- FORM: OBBLIGATORI */
+
+.obbligatorio {
+  color: var(--colore-errore);
+  font-weight: 700;
+}
+
+.nota {
+  font-style: italic;
+  font-size: 12px;
+  color: var(--colore-testo-tenue);
+}
+
+.nota-form {
+  margin: -8px 0 14px;
+  font-size: 12px;
+  color: var(--colore-testo-tenue);
+}
+
+/* --------------------------------------------- MARCHIO INTESTAZIONE */
+
+.intestazione-marchio {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.intestazione-logo-img {
+  width: 26px;
+  height: 26px;
+}
+
+/* ============================================================
+   RIFINITURE GRAFICHE
+   ============================================================ */
+
+/* ---- Intestazione in tinta piena: da' identita' all'applicazione ---- */
+
+.intestazione {
+  background: linear-gradient(90deg, var(--colore-primario) 0%, var(--colore-primario-scuro) 100%);
+  border-bottom: none;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.intestazione .intestazione-logo {
+  color: #fff;
+}
+
+.intestazione .bottone-profilo {
+  color: #fff;
+}
+
+.intestazione .bottone-profilo:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.intestazione .avatar {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.intestazione .badge-ruolo {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.intestazione .bottone-secondario {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: transparent;
+}
+
+.intestazione .bottone-secondario:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ---- Schede con accento colorato sul lato ---- */
+
+.scheda {
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.scheda:hover {
+  border-left-color: var(--colore-primario);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Titoli di sezione con barretta rossa ---- */
+
+.pannello-titolo::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 15px;
+  background: var(--colore-primario);
+  border-radius: 2px;
+  margin-right: 2px;
+}
+
+/* ---- Stati come pastiglie colorate, piu' leggibili ---- */
+
+.stato-ok,
+.stato-attesa,
+.stato-no,
+.stato-tenue {
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.stato-ok {
+  background: #e7f3ea;
+  color: #1f6b34;
+}
+
+.stato-attesa {
+  background: #fdf1dc;
+  color: #8a5b00;
+}
+
+.stato-no {
+  background: #fbeaea;
+  color: var(--colore-errore);
+}
+
+.stato-tenue {
+  background: #f1efee;
+  color: var(--colore-testo-tenue);
+}
+
+/* ---- Posti disponibili in evidenza ---- */
+
+.posti-liberi {
+  background: var(--colore-primario-chiaro);
+  color: var(--colore-primario);
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.posti-esauriti {
+  background: #f1efee;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+/* ---- Sfondo della pagina con una velatura calda ---- */
+
+body {
+  background:
+    radial-gradient(1100px 340px at 50% -140px, rgba(155, 27, 27, 0.07), transparent),
+    var(--colore-sfondo);
+}
+
+/* ---- Login piu' arioso ---- */
+
+.login-riquadro {
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  border-radius: 16px;
+}
+
+.login-marchio {
+  margin-bottom: 26px;
+}
+
+/* ---- Modali con ombra piu' netta ---- */
+
+.modale {
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+}
+
+/* ---- Etichette argomenti con bordo ---- */
+
+.etichetta {
+  border: 1px solid rgba(155, 27, 27, 0.16);
+}
+
+/* ---- Contatore richieste piu' visibile ---- */
+
+.contatore {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* --------------------------------------- CAMPO CON ICONA (password) */
+
+.campo-con-icona {
+  position: relative;
+}
+
+.campo-input-icona {
+  padding-right: 42px;
+}
+
+.bottone-occhio {
+  position: absolute;
+  top: 9px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--colore-testo-tenue);
+  cursor: pointer;
+  padding: 0;
+}
+
+.bottone-occhio:hover {
+  color: var(--colore-primario);
+  background: var(--colore-primario-chiaro);
 }

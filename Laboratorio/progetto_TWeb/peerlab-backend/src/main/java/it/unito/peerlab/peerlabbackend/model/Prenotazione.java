@@ -21,6 +21,10 @@ public class Prenotazione {
     @Column(length = 500)
     private String messaggio;
 
+    /** Email istituzionale, richiesta solo per le sessioni online. */
+    @Column(name = "email_contatto")
+    private String emailContatto;
+
     @ManyToOne
     @JoinColumn(name = "studente_id", nullable = false)
     private Utente studente;
@@ -36,10 +40,11 @@ public class Prenotazione {
     }
 
     public Prenotazione(StatoPrenotazione stato, LocalDateTime dataRichiesta, String messaggio,
-                        Utente studente, Sessione sessione) {
+                        String emailContatto, Utente studente, Sessione sessione) {
         this.stato = stato;
         this.dataRichiesta = dataRichiesta;
         this.messaggio = messaggio;
+        this.emailContatto = emailContatto;
         this.studente = studente;
         this.sessione = sessione;
     }
@@ -55,6 +60,9 @@ public class Prenotazione {
 
     public String getMessaggio() { return messaggio; }
     public void setMessaggio(String messaggio) { this.messaggio = messaggio; }
+
+    public String getEmailContatto() { return emailContatto; }
+    public void setEmailContatto(String emailContatto) { this.emailContatto = emailContatto; }
 
     public Utente getStudente() { return studente; }
     public void setStudente(Utente studente) { this.studente = studente; }

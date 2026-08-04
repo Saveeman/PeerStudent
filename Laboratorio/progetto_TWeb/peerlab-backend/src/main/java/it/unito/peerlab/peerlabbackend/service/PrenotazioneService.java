@@ -110,10 +110,37 @@ public class PrenotazioneService {
             throw new OperazioneNonValidaException("La sessione ha esaurito i posti disponibili");
         }
 
+        // La motivazione e' sempre obbligatoria: serve al tutor per decidere
+        // se accettare la richiesta.
+        if (richiesta.messaggio() == null || richiesta.messaggio().trim().isEmpty()) {
+            throw new OperazioneNonValidaException(
+                    "Devi motivare la tua richiesta di partecipazione");
+        }
+
+        // Per le sessioni online serve anche l'email istituzionale, perche' e'
+        // l'indirizzo a cui verra' inviato il link della videochiamata.
+        String email = richiesta.emailContatto() == null
+                ? null : richiesta.emailContatto().trim();
+
+        if (sessione.getModalita() == ModalitaSessione.ONLINE) {
+            if (email == null || email.isEmpty()) {
+                throw new OperazioneNonValidaException(
+                        "Per le sessioni online devi indicare la tua email istituzionale");
+            }
+            if (!emailIstituzionale(email)) {
+                throw new OperazioneNonValidaException(
+                        "Inserisci un'email istituzionale (@edu.unito.it o @unito.it)");
+            }
+        } else {
+            // per le sessioni in presenza l'email non serve
+            email = null;
+        }
+
         Prenotazione prenotazione = new Prenotazione(
                 StatoPrenotazione.IN_ATTESA,
                 LocalDateTime.now(),
-                richiesta.messaggio(),
+                richiesta.messaggio().trim(),
+                email,
                 studente,
                 sessione
         );
@@ -185,6 +212,12 @@ public class PrenotazioneService {
             throw new NonAutorizzatoException("Non sei il tutor di questa sessione");
         }
         return prenotazione;
+    }
+
+    /** Verifica che l'indirizzo appartenga a un dominio dell'ateneo. */
+    private boolean emailIstituzionale(String email) {
+        String e = email.toLowerCase();
+        return e.endsWith("@edu.unito.it") || e.endsWith("@unito.it");
     }
 
     private long postiDisponibili(Sessione sessione) {

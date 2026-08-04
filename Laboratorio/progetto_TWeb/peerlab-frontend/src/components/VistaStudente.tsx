@@ -46,6 +46,11 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
   /** Testo di ricerca attualmente applicato ("" = nessuna ricerca). */
   const [ricerca, setRicerca] = useState<string>("");
 
+  /** Titoli di TUTTE le sessioni, usati per i suggerimenti di ricerca.
+      Si caricano una volta sola: se usassimo la lista filtrata, i suggerimenti
+      si restringerebbero via via che l'utente digita. */
+  const [titoliPerSuggerimenti, setTitoliPerSuggerimenti] = useState<string[]>([]);
+
   /** Sessione di cui e' aperto il dettaglio (null = nessuna). */
   const [sessioneDettaglio, setSessioneDettaglio] = useState<number | null>(null);
 
@@ -54,17 +59,22 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
 
   /* ---------------------------------------------------------- CARICAMENTI */
 
-  /** Le materie servono solo per popolare il filtro: si caricano una volta sola. */
+  /** Materie per il filtro e titoli per i suggerimenti: entrambi statici,
+      si caricano una volta sola all'avvio della vista. */
   useEffect(() => {
     let annullato = false;
-    catalogoApi
-      .materie()
-      .then((m) => {
-        if (!annullato) setMaterie(m);
+
+    Promise.all([catalogoApi.materie(), sessioniApi.elenco()])
+      .then(([m, tutte]) => {
+        if (!annullato) {
+          setMaterie(m);
+          setTitoliPerSuggerimenti(tutte.map((s) => s.titolo));
+        }
       })
       .catch(() => {
-        if (!annullato) setErrore("Impossibile caricare le materie");
+        if (!annullato) setErrore("Impossibile caricare i dati iniziali");
       });
+
     return () => {
       annullato = true;
     };
@@ -120,10 +130,10 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
    * le sessioni (per aggiornare i posti) e le prenotazioni (per far comparire
    * la nuova richiesta nel pannello laterale).
    */
-  async function prenota(sessioneId: number, messaggio: string) {
+  async function prenota(sessioneId: number, messaggio: string, email: string) {
     setErrore("");
     try {
-      await prenotazioniApi.crea({ sessioneId, messaggio });
+      await prenotazioniApi.crea({ sessioneId, messaggio, emailContatto: email });
       const [nuoveSessioni] = await Promise.all([
         sessioniApi.elenco(materiaSelezionata ?? undefined, ricerca || undefined),
         caricaPrenotazioni(),
@@ -157,7 +167,10 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
 
   return (
     <div className="vista">
-      <BarraRicerca onCerca={(t) => setRicerca(t)} ricercaAttiva={ricerca} />
+      <BarraRicerca
+        onCerca={(t) => setRicerca(t)}
+        suggerimenti={titoliPerSuggerimenti}
+      />
 
       <FiltroMaterie
         materie={materie}

@@ -4,6 +4,7 @@ import { authApi } from "./api/api";
 import { Login } from "./components/Login";
 import { VistaStudente } from "./components/VistaStudente";
 import { VistaTutor } from "./components/VistaTutor";
+import { MioProfilo } from "./components/MioProfilo";
 import type { Utente } from "./types";
 import "./App.css";
 
@@ -18,6 +19,9 @@ import "./App.css";
 export default function App(): ReactElement {
   const [utente, setUtente] = useState<Utente | null>(null);
   const [caricamentoIniziale, setCaricamentoIniziale] = useState<boolean>(true);
+
+  /** Se true, e' aperta la scheda con i dati personali dell'utente. */
+  const [profiloAperto, setProfiloAperto] = useState<boolean>(false);
 
   /**
    * Effetto eseguito una sola volta al primo rendering (array di dipendenze
@@ -69,11 +73,24 @@ export default function App(): ReactElement {
   return (
     <div className="app">
       <header className="intestazione">
-        <span className="intestazione-logo">PeerLab</span>
+        <span className="intestazione-marchio">
+          <img src="/peerstudent.svg" alt="" className="intestazione-logo-img" />
+          <span className="intestazione-logo">PeerStudent</span>
+        </span>
         <div className="intestazione-utente">
-          <span>
-            {utente.nome} {utente.cognome}
-          </span>
+          {/* Cliccando sul proprio nome si aprono i dati personali */}
+          <button
+            className="bottone-profilo"
+            onClick={() => setProfiloAperto(true)}
+          >
+            <span className="avatar avatar-piccolo">
+              {utente.nome.charAt(0).toUpperCase()}
+              {utente.cognome.charAt(0).toUpperCase()}
+            </span>
+            <span>
+              {utente.nome} {utente.cognome}
+            </span>
+          </button>
           <span className="badge-ruolo">
             {utente.ruolo === "TUTOR" ? "tutor" : "studente"}
           </span>
@@ -94,6 +111,10 @@ export default function App(): ReactElement {
           <VistaStudente utente={utente} />
         )}
       </main>
+
+      {profiloAperto && (
+        <MioProfilo utente={utente} onChiudi={() => setProfiloAperto(false)} />
+      )}
     </div>
   );
 }

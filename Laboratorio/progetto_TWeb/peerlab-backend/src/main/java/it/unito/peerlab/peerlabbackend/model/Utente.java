@@ -1,6 +1,7 @@
 package it.unito.peerlab.peerlabbackend.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +28,15 @@ public class Utente {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(unique = true)
+    private String matricola;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Ruolo ruolo;
+
+    @Column(name = "data_nascita")
+    private LocalDate dataNascita;
 
     @Column(length = 500)
     private String bio;
@@ -44,13 +51,16 @@ public class Utente {
     }
 
     public Utente(String nome, String cognome, String username, String password,
-                  String email, Ruolo ruolo, String bio) {
+                  String email, String matricola, Ruolo ruolo,
+                  LocalDate dataNascita, String bio) {
         this.nome = nome;
         this.cognome = cognome;
         this.username = username;
         this.password = password;
         this.email = email;
+        this.matricola = matricola;
         this.ruolo = ruolo;
+        this.dataNascita = dataNascita;
         this.bio = bio;
     }
 
@@ -72,8 +82,14 @@ public class Utente {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
+    public String getMatricola() { return matricola; }
+    public void setMatricola(String matricola) { this.matricola = matricola; }
+
     public Ruolo getRuolo() { return ruolo; }
     public void setRuolo(Ruolo ruolo) { this.ruolo = ruolo; }
+
+    public LocalDate getDataNascita() { return dataNascita; }
+    public void setDataNascita(LocalDate dataNascita) { this.dataNascita = dataNascita; }
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }

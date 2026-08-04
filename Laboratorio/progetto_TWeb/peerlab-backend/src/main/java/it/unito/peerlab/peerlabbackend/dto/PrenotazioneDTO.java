@@ -14,6 +14,7 @@ public record PrenotazioneDTO(
         StatoPrenotazione stato,
         LocalDateTime dataRichiesta,
         String messaggio,
+        String emailContatto,
         UtenteDTO studente,
         Long sessioneId,
         String sessioneTitolo,

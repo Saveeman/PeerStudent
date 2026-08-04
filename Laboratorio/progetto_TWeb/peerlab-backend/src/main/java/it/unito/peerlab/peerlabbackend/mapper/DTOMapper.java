@@ -4,6 +4,8 @@ import it.unito.peerlab.peerlabbackend.dto.*;
 import it.unito.peerlab.peerlabbackend.model.*;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 
 /**
@@ -27,9 +29,21 @@ public class DTOMapper {
                 u.getCognome(),
                 u.getUsername(),
                 u.getEmail(),
+                u.getMatricola(),
                 u.getRuolo(),
+                u.getDataNascita(),
+                calcolaEta(u.getDataNascita()),
                 u.getBio()
         );
+    }
+
+    /**
+     * L'eta' non e' memorizzata nel database: sarebbe un dato che invecchia da
+     * solo. Si calcola dalla data di nascita al momento della richiesta.
+     */
+    private Integer calcolaEta(LocalDate dataNascita) {
+        if (dataNascita == null) return null;
+        return Period.between(dataNascita, LocalDate.now()).getYears();
     }
 
     public MateriaDTO toMateriaDTO(Materia m) {
@@ -110,6 +124,7 @@ public class DTOMapper {
                 p.getStato(),
                 p.getDataRichiesta(),
                 p.getMessaggio(),
+                p.getEmailContatto(),
                 toUtenteDTO(p.getStudente()),
                 s != null ? s.getId() : null,
                 s != null ? s.getTitolo() : null,

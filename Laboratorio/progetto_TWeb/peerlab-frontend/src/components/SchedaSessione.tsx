@@ -18,7 +18,7 @@ interface SchedaSessioneProps {
   sessione: Sessione;
   prenotazioneEsistente: Prenotazione | undefined;
   utenteId: number;
-  onPrenota: (sessioneId: number, messaggio: string) => Promise<void>;
+  onPrenota: (sessioneId: number, messaggio: string, email: string) => Promise<void>;
   onApriDettaglio: (sessioneId: number) => void;
   onApriProfiloTutor: (tutor: Utente) => void;
 }
@@ -44,17 +44,47 @@ export function SchedaSessione({
   onApriProfiloTutor,
 }: SchedaSessioneProps): ReactElement {
   const [messaggio, setMessaggio] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [erroreForm, setErroreForm] = useState<string>("");
   const [formAperto, setFormAperto] = useState<boolean>(false);
   const [inCorso, setInCorso] = useState<boolean>(false);
+
+  const eOnline = sessione.modalita === "ONLINE";
 
   const eMiaSessione = sessione.tutor.id === utenteId;
   const esaurita = sessione.postiDisponibili <= 0;
 
   async function confermaPrenotazione() {
+    setErroreForm("");
+
+    // La motivazione e' sempre obbligatoria.
+    if (messaggio.trim() === "") {
+      setErroreForm("Devi motivare la tua richiesta di partecipazione");
+      return;
+    }
+
+    // Per le sessioni online serve anche l'email istituzionale: e' l'indirizzo
+    // a cui il tutor invia il link della videochiamata.
+    if (eOnline) {
+      const indirizzo = email.trim().toLowerCase();
+      if (indirizzo === "") {
+        setErroreForm("Per le sessioni online devi indicare la tua email istituzionale");
+        return;
+      }
+      if (
+        !indirizzo.endsWith("@edu.unito.it") &&
+        !indirizzo.endsWith("@unito.it")
+      ) {
+        setErroreForm("Usa un'email istituzionale (@edu.unito.it o @unito.it)");
+        return;
+      }
+    }
+
     setInCorso(true);
     try {
-      await onPrenota(sessione.id, messaggio);
+      await onPrenota(sessione.id, messaggio.trim(), eOnline ? email.trim() : "");
       setMessaggio("");
+      setEmail("");
       setFormAperto(false);
     } finally {
       setInCorso(false);
@@ -139,8 +169,16 @@ export function SchedaSessione({
       <div className="scheda-dettagli">
         <span>{formattaData(sessione.dataOra)}</span>
         <span>·</span>
+        <span>{sessione.tutor.email}</span>
+        <span>·</span>
         <span>
-          {sessione.modalita === "ONLINE" ? "Online" : sessione.luogo}
+          {eOnline ? (
+            <>
+              Online <em className="nota">(il link della call arriva per email)</em>
+            </>
+          ) : (
+            sessione.luogo
+          )}
         </span>
       </div>
 
@@ -175,7 +213,7 @@ export function SchedaSessione({
       {formAperto && (
         <div className="scheda-form">
           <label className="campo-etichetta" htmlFor={`msg-${sessione.id}`}>
-            Messaggio per il tutor (facoltativo)
+            Perche' vuoi partecipare? <span className="obbligatorio">*</span>
           </label>
           <textarea
             id={`msg-${sessione.id}`}
@@ -184,6 +222,29 @@ export function SchedaSessione({
             onChange={(e) => setMessaggio(e.target.value)}
             placeholder="Es. sono in difficolta' con gli esercizi del secondo tipo"
           />
+
+          {eOnline && (
+            <>
+              <label className="campo-etichetta" htmlFor={`mail-${sessione.id}`}>
+                Email istituzionale <span className="obbligatorio">*</span>
+              </label>
+              <input
+                id={`mail-${sessione.id}`}
+                className="campo-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome.cognome@edu.unito.it"
+              />
+              <p className="nota-form">
+                La sessione si svolge online: il link della videochiamata verra'
+                inviato a questo indirizzo.
+              </p>
+            </>
+          )}
+
+          {erroreForm !== "" && <p className="campo-errore">{erroreForm}</p>}
+
           <div className="riga-bottoni">
             <button
               className="bottone-primario"
@@ -197,6 +258,8 @@ export function SchedaSessione({
               onClick={() => {
                 setFormAperto(false);
                 setMessaggio("");
+                setEmail("");
+                setErroreForm("");
               }}
             >
               Annulla

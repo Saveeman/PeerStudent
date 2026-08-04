@@ -14,7 +14,7 @@ interface ListaSessioniProps {
   prenotazioni: Prenotazione[];
   utenteId: number;
   inCaricamento: boolean;
-  onPrenota: (sessioneId: number, messaggio: string) => Promise<void>;
+  onPrenota: (sessioneId: number, messaggio: string, email: string) => Promise<void>;
   onApriDettaglio: (sessioneId: number) => void;
   onApriProfiloTutor: (tutor: Utente) => void;
 }

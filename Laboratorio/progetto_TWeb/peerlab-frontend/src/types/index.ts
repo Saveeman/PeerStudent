@@ -26,7 +26,10 @@ export interface Utente {
   cognome: string;
   username: string;
   email: string;
+  matricola: string | null;
   ruolo: Ruolo;
+  dataNascita: string | null;
+  eta: number | null;
   bio: string | null;
 }
 
@@ -73,6 +76,7 @@ export interface Prenotazione {
   stato: StatoPrenotazione;
   dataRichiesta: string;
   messaggio: string | null;
+  emailContatto: string | null;
   studente: Utente;
   sessioneId: number;
   sessioneTitolo: string;
@@ -113,6 +117,8 @@ export interface NuovaSessioneRequest {
 export interface NuovaPrenotazioneRequest {
   sessioneId: number;
   messaggio: string;
+  /** Richiesta solo per le sessioni in modalita' ONLINE. */
+  emailContatto: string;
 }
 
 export interface NuovoFeedbackRequest {
