@@ -26,6 +26,14 @@ public class Sessione {
 
     private String luogo;
 
+    /**
+     * Link della videochiamata, valorizzato solo per le sessioni ONLINE.
+     * E' un dato riservato: viene comunicato soltanto al tutor proprietario e
+     * agli studenti la cui prenotazione e' stata accettata.
+     */
+    @Column(name = "link_incontro", length = 500)
+    private String linkIncontro;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ModalitaSessione modalita;
@@ -90,6 +98,9 @@ public class Sessione {
 
     public String getLuogo() { return luogo; }
     public void setLuogo(String luogo) { this.luogo = luogo; }
+
+    public String getLinkIncontro() { return linkIncontro; }
+    public void setLinkIncontro(String linkIncontro) { this.linkIncontro = linkIncontro; }
 
     public ModalitaSessione getModalita() { return modalita; }
     public void setModalita(ModalitaSessione modalita) { this.modalita = modalita; }

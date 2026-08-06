@@ -60,6 +60,8 @@ export interface Sessione {
   descrizione: string | null;
   dataOra: string;          // il back-end invia una data ISO come stringa
   luogo: string | null;
+  /** Link della videochiamata: valorizzato solo se l'utente ha diritto di vederlo. */
+  linkIncontro: string | null;
   modalita: ModalitaSessione;
   postiTotali: number;
   postiOccupati: number;
@@ -82,6 +84,9 @@ export interface Prenotazione {
   sessioneTitolo: string;
   sessioneDataOra: string;
   tutorNome: string | null;
+  /** Link della videochiamata, presente solo se la richiesta e' stata accettata
+      e l'appuntamento si svolge online. */
+  linkIncontro: string | null;
   haFeedback: boolean;
 }
 
@@ -98,6 +103,15 @@ export interface Feedback {
 // -------------------------------------------------------- DTO DI RICHIESTA
 // Corrispondono ai body delle POST accettate dal back-end.
 
+export interface Avviso {
+  id: number;
+  testo: string;
+  data: string;
+  sessioneId: number;
+  sessioneTitolo: string | null;
+  tutorNome: string | null;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -108,6 +122,7 @@ export interface NuovaSessioneRequest {
   descrizione: string;
   dataOra: string;
   luogo: string;
+  linkIncontro: string;
   modalita: ModalitaSessione;
   postiTotali: number;
   materiaId: number;
@@ -125,6 +140,11 @@ export interface NuovoFeedbackRequest {
   prenotazioneId: number;
   voto: number;
   commento: string;
+}
+
+export interface NuovoAvvisoRequest {
+  sessioneId: number;
+  testo: string;
 }
 
 export interface NuovoMaterialeRequest {

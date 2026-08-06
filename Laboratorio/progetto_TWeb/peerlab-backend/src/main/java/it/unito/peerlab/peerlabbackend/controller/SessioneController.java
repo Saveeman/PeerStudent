@@ -40,15 +40,20 @@ public class SessioneController {
     @GetMapping
     public ResponseEntity<List<SessioneDTO>> elencaSessioni(
             @RequestParam(required = false) Long materiaId,
-            @RequestParam(required = false) String q) {
+            @RequestParam(required = false) String q,
+            HttpSession sessione) {
+
+        // l'id serve al service per decidere se includere il link riservato
+        Long richiedenteId = SessioneUtils.getUtenteId(sessione);
 
         if (materiaId != null) {
-            return ResponseEntity.ok(sessioneService.getSessioniPerMateria(materiaId));
+            return ResponseEntity.ok(
+                    sessioneService.getSessioniPerMateria(materiaId, richiedenteId));
         }
         if (q != null && !q.isBlank()) {
-            return ResponseEntity.ok(sessioneService.cercaPerTitolo(q));
+            return ResponseEntity.ok(sessioneService.cercaPerTitolo(q, richiedenteId));
         }
-        return ResponseEntity.ok(sessioneService.getSessioniAperte());
+        return ResponseEntity.ok(sessioneService.getSessioniAperte(richiedenteId));
     }
 
     /**
@@ -56,8 +61,10 @@ public class SessioneController {
      * Dettaglio di una sessione: l'id e' un SEGMENTO PARAMETRICO del path.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<SessioneDTO> dettaglioSessione(@PathVariable Long id) {
-        return ResponseEntity.ok(sessioneService.getById(id));
+    public ResponseEntity<SessioneDTO> dettaglioSessione(@PathVariable Long id,
+                                                         HttpSession sessione) {
+        Long richiedenteId = SessioneUtils.getUtenteId(sessione);
+        return ResponseEntity.ok(sessioneService.getById(id, richiedenteId));
     }
 
     /**
@@ -65,8 +72,11 @@ public class SessioneController {
      * Tutte le sessioni create da un tutor.
      */
     @GetMapping("/tutor/{tutorId}")
-    public ResponseEntity<List<SessioneDTO>> sessioniDelTutor(@PathVariable Long tutorId) {
-        return ResponseEntity.ok(sessioneService.getSessioniDelTutor(tutorId));
+    public ResponseEntity<List<SessioneDTO>> sessioniDelTutor(@PathVariable Long tutorId,
+                                                              HttpSession sessione) {
+        Long richiedenteId = SessioneUtils.getUtenteId(sessione);
+        return ResponseEntity.ok(
+                sessioneService.getSessioniDelTutor(tutorId, richiedenteId));
     }
 
     /**

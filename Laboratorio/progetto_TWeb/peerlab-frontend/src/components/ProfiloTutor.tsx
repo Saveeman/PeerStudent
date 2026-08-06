@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
+import { useChiusuraConEsc } from "../hooks/useChiusuraConEsc";
 import { feedbackApi } from "../api/api";
 import type { Feedback, Utente } from "../types";
 
@@ -27,6 +28,9 @@ function formattaData(dataIso: string): string {
 }
 
 export function ProfiloTutor({ tutor, onChiudi }: ProfiloTutorProps): ReactElement {
+  // chiusura con il tasto Esc, oltre che con il click fuori
+  useChiusuraConEsc(onChiudi);
+
   const [media, setMedia] = useState<number | null>(null);
   const [valutazioni, setValutazioni] = useState<Feedback[]>([]);
   const [inCaricamento, setInCaricamento] = useState<boolean>(true);
@@ -62,8 +66,13 @@ export function ProfiloTutor({ tutor, onChiudi }: ProfiloTutorProps): ReactEleme
 
   return (
     <div className="sovrapposizione" onClick={onChiudi}>
-      <div className="modale" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modale-titolo">
+      <div className="modale"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titolo-profilo-tutor"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="modale-titolo" id="titolo-profilo-tutor">
           {tutor.nome} {tutor.cognome}
         </h2>
         <p className="modale-sottotitolo">{tutor.email}</p>

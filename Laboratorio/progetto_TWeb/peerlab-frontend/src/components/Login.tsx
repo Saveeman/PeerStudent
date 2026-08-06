@@ -98,7 +98,7 @@ export function Login({ onLoginRiuscito }: LoginProps): ReactElement {
         </div>
 
         {/* Lo spazio per il messaggio di errore richiesto dalla traccia */}
-        {errore !== "" && <p className="campo-errore">{errore}</p>}
+        {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
         <button
           className="bottone-primario"

@@ -11,6 +11,7 @@ public record NuovaSessioneRequest(
         String descrizione,
         LocalDateTime dataOra,
         String luogo,
+        String linkIncontro,
         ModalitaSessione modalita,
         Integer postiTotali,
         Long materiaId,

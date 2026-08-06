@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import { authApi } from "./api/api";
+import { authApi, impostaGestoreNonAutorizzato } from "./api/api";
 import { Login } from "./components/Login";
 import { VistaStudente } from "./components/VistaStudente";
 import { VistaTutor } from "./components/VistaTutor";
@@ -32,6 +32,12 @@ export default function App(): ReactElement {
    * l'utente si ritroverebbe alla schermata di login pur essendo ancora
    * autenticato lato server.
    */
+  /* Se una qualsiasi richiesta riceve 401, la sessione lato server non e' piu'
+     valida: si torna alla schermata di accesso. */
+  useEffect(() => {
+    impostaGestoreNonAutorizzato(() => setUtente(null));
+  }, []);
+
   useEffect(() => {
     let annullato = false;
 

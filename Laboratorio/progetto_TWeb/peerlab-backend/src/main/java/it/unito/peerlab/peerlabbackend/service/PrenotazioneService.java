@@ -103,9 +103,18 @@ public class PrenotazioneService {
         if (sessione.getTutor().getId().equals(studenteId)) {
             throw new OperazioneNonValidaException("Non puoi prenotarti a una tua sessione");
         }
-        if (prenotazioneRepository.existsByStudenteIdAndSessioneId(studenteId, sessione.getId())) {
-            throw new OperazioneNonValidaException("Hai gia' inviato una richiesta per questa sessione");
+        /* Se esiste gia' una richiesta di questo studente per questa sessione, si
+           distinguono due casi: se e' stata RITIRATA lo studente ha il diritto di
+           ripensarci, altrimenti la richiesta e' un duplicato. */
+        Prenotazione precedente = prenotazioneRepository
+                .findByStudenteIdAndSessioneId(studenteId, sessione.getId())
+                .orElse(null);
+
+        if (precedente != null && precedente.getStato() != StatoPrenotazione.RITIRATA) {
+            throw new OperazioneNonValidaException(
+                    "Hai gia' inviato una richiesta per questo appuntamento");
         }
+
         if (postiDisponibili(sessione) <= 0) {
             throw new OperazioneNonValidaException("La sessione ha esaurito i posti disponibili");
         }
@@ -134,6 +143,18 @@ public class PrenotazioneService {
         } else {
             // per le sessioni in presenza l'email non serve
             email = null;
+        }
+
+        /* Richiesta ritirata in precedenza: la si riporta in attesa aggiornando
+           motivazione, email e data, invece di creare una seconda riga per la
+           stessa coppia studente-sessione. Essendo il metodo @Transactional,
+           l'entita' e' managed e le modifiche vengono scritte al commit. */
+        if (precedente != null) {
+            precedente.setStato(StatoPrenotazione.IN_ATTESA);
+            precedente.setDataRichiesta(LocalDateTime.now());
+            precedente.setMessaggio(richiesta.messaggio().trim());
+            precedente.setEmailContatto(email);
+            return mapper.toPrenotazioneDTO(precedente);
         }
 
         Prenotazione prenotazione = new Prenotazione(

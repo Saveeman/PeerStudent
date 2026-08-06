@@ -8,12 +8,14 @@
 
 import type {
   Argomento,
+  Avviso,
   Feedback,
   LoginRequest,
   Materia,
   MaterialeDidattico,
   NuovaPrenotazioneRequest,
   NuovaSessioneRequest,
+  NuovoAvvisoRequest,
   NuovoFeedbackRequest,
   NuovoMaterialeRequest,
   Prenotazione,
@@ -23,6 +25,22 @@ import type {
 
 /** Origine del back-end: porta diversa da quella del front-end (5173). */
 const BASE_URL = "http://localhost:8080/api";
+
+/**
+ * Funzione richiamata quando il server risponde 401 a una richiesta che
+ * presupponeva un utente autenticato.
+ *
+ * Serve a gestire il caso in cui la sessione lato server non e' piu' valida
+ * (per esempio perche' il server e' stato riavviato, o perche' e' scaduta per
+ * inattivita'): il cookie nel browser esiste ancora, ma non corrisponde piu' a
+ * nulla. Senza questo meccanismo l'applicazione continuerebbe a mostrare
+ * l'utente come collegato mentre ogni richiesta fallisce.
+ */
+let gestoreNonAutorizzato: (() => void) | null = null;
+
+export function impostaGestoreNonAutorizzato(fn: () => void): void {
+  gestoreNonAutorizzato = fn;
+}
 
 /**
  * Errore applicativo che porta con se' lo status HTTP e il messaggio
@@ -61,6 +79,13 @@ async function richiesta<T>(
   });
 
   if (!risposta.ok) {
+    /* Sessione non piu' valida: si avvisa l'applicazione, che riportera'
+       l'utente alla schermata di accesso. Il login e' escluso perche' un 401
+       li' significa semplicemente credenziali sbagliate. */
+    if (risposta.status === 401 && percorso !== "/auth/login" && gestoreNonAutorizzato) {
+      gestoreNonAutorizzato();
+    }
+
     // il back-end restituisce { "errore": "..." } tramite GestoreErrori
     let messaggio = "Si e' verificato un errore";
     try {
@@ -183,6 +208,24 @@ export const prenotazioniApi = {
 
   ritira: (id: number): Promise<Prenotazione> =>
     richiesta<Prenotazione>(`/prenotazioni/${id}/ritira`, { method: "POST" }),
+};
+
+// ------------------------------------------------------------------ AVVISI
+
+export const avvisiApi = {
+  /** Il tutor invia un avviso ai partecipanti di un suo appuntamento. */
+  invia: (dati: NuovoAvvisoRequest): Promise<Avviso> =>
+    richiesta<Avviso>("/avvisi", {
+      method: "POST",
+      body: JSON.stringify(dati),
+    }),
+
+  /** Gli avvisi destinati all'utente collegato. */
+  miei: (): Promise<Avviso[]> => richiesta<Avviso[]>("/avvisi/miei"),
+
+  /** Gli avvisi inviati su un appuntamento (solo il tutor proprietario). */
+  diSessione: (sessioneId: number): Promise<Avviso[]> =>
+    richiesta<Avviso[]>(`/avvisi/sessione/${sessioneId}`),
 };
 
 // ----------------------------------------------------------------- FEEDBACK

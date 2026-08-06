@@ -20,6 +20,7 @@ public record PrenotazioneDTO(
         String sessioneTitolo,
         LocalDateTime sessioneDataOra,
         String tutorNome,
+        String linkIncontro,
         boolean haFeedback
 ) {
 }

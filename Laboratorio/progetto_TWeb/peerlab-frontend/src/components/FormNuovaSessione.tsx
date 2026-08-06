@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
+import { useChiusuraConEsc } from "../hooks/useChiusuraConEsc";
 import { ApiError, catalogoApi, sessioniApi } from "../api/api";
 import type { Argomento, Materia, ModalitaSessione } from "../types";
 
@@ -20,6 +21,9 @@ export function FormNuovaSessione({
   onCreata,
   onAnnulla,
 }: FormNuovaSessioneProps): ReactElement {
+  // chiusura con il tasto Esc, oltre che con il click fuori
+  useChiusuraConEsc(onAnnulla);
+
   const [materie, setMaterie] = useState<Materia[]>([]);
   const [argomenti, setArgomenti] = useState<Argomento[]>([]);
 
@@ -27,6 +31,7 @@ export function FormNuovaSessione({
   const [descrizione, setDescrizione] = useState<string>("");
   const [dataOra, setDataOra] = useState<string>("");
   const [luogo, setLuogo] = useState<string>("");
+  const [linkIncontro, setLinkIncontro] = useState<string>("");
   const [modalita, setModalita] = useState<ModalitaSessione>("PRESENZA");
   const [postiTotali, setPostiTotali] = useState<number>(4);
   const [materiaId, setMateriaId] = useState<number | null>(null);
@@ -88,6 +93,14 @@ export function FormNuovaSessione({
       setErrore("Indica data e ora della sessione");
       return;
     }
+    if (modalita === "ONLINE" && linkIncontro.trim() === "") {
+      setErrore("Per un appuntamento online devi indicare il link della videochiamata");
+      return;
+    }
+    if (modalita === "PRESENZA" && luogo.trim() === "") {
+      setErrore("Indica l'aula o la sala in cui si svolge l'appuntamento");
+      return;
+    }
 
     setInCorso(true);
     try {
@@ -97,7 +110,8 @@ export function FormNuovaSessione({
         // l'input datetime-local produce "2026-09-10T14:30": il formato che
         // Spring si aspetta per un LocalDateTime
         dataOra: dataOra.length === 16 ? dataOra + ":00" : dataOra,
-        luogo,
+        luogo: modalita === "ONLINE" ? "Online" : luogo.trim(),
+        linkIncontro: modalita === "ONLINE" ? linkIncontro.trim() : "",
         modalita,
         postiTotali,
         materiaId,
@@ -115,8 +129,13 @@ export function FormNuovaSessione({
 
   return (
     <div className="sovrapposizione" onClick={onAnnulla}>
-      <div className="modale modale-larga" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modale-titolo">Nuova sessione</h2>
+      <div className="modale modale-larga"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titolo-nuova-sessione"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="modale-titolo" id="titolo-nuova-sessione">Nuova sessione</h2>
 
         <label className="campo-etichetta" htmlFor="titolo">
           Titolo
@@ -225,22 +244,38 @@ export function FormNuovaSessione({
           </div>
           <div>
             <label className="campo-etichetta" htmlFor="luogo">
-              {modalita === "ONLINE" ? "Link" : "Luogo"}
+              {modalita === "ONLINE" ? "Link della videochiamata" : "Luogo"}
             </label>
-            <input
-              id="luogo"
-              className="campo-input"
-              type="text"
-              value={luogo}
-              onChange={(e) => setLuogo(e.target.value)}
-              placeholder={
-                modalita === "ONLINE" ? "Link della videochiamata" : "Es. Aula studio 2"
-              }
-            />
+            {modalita === "ONLINE" ? (
+              <input
+                id="luogo"
+                className="campo-input"
+                type="text"
+                value={linkIncontro}
+                onChange={(e) => setLinkIncontro(e.target.value)}
+                placeholder="https://meet.google.com/..."
+              />
+            ) : (
+              <input
+                id="luogo"
+                className="campo-input"
+                type="text"
+                value={luogo}
+                onChange={(e) => setLuogo(e.target.value)}
+                placeholder="Es. Aula A, Sala studio Edisu"
+              />
+            )}
           </div>
         </div>
 
-        {errore !== "" && <p className="campo-errore">{errore}</p>}
+        {modalita === "ONLINE" && (
+          <p className="nota-form">
+            Il link verra' comunicato solo agli studenti la cui richiesta viene
+            accettata: non e' visibile a chi consulta l'elenco.
+          </p>
+        )}
+
+        {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
         <div className="riga-bottoni">
           <button className="bottone-primario" onClick={invia} disabled={inCorso}>

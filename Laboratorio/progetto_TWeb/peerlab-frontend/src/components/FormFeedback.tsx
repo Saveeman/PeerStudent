@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
+import { useChiusuraConEsc } from "../hooks/useChiusuraConEsc";
 import { ApiError, feedbackApi } from "../api/api";
 import type { Prenotazione } from "../types";
 
@@ -24,6 +25,9 @@ export function FormFeedback({
   onInviato,
   onAnnulla,
 }: FormFeedbackProps): ReactElement {
+  // chiusura con il tasto Esc, oltre che con il click fuori
+  useChiusuraConEsc(onAnnulla);
+
   const [voto, setVoto] = useState<number>(5);
   const [commento, setCommento] = useState<string>("");
   const [errore, setErrore] = useState<string>("");
@@ -53,8 +57,13 @@ export function FormFeedback({
     <div className="sovrapposizione" onClick={onAnnulla}>
       {/* stopPropagation impedisce che il click sulla finestra risalga fino al
           glasspane e la chiuda: e' il bubbling degli eventi del DOM. */}
-      <div className="modale" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modale-titolo">Valuta la sessione</h2>
+      <div className="modale"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titolo-valutazione"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="modale-titolo" id="titolo-valutazione">Valuta la sessione</h2>
         <p className="modale-sottotitolo">{prenotazione.sessioneTitolo}</p>
 
         <label className="campo-etichetta">Voto</label>
@@ -81,7 +90,7 @@ export function FormFeedback({
           placeholder="Com'e' andata la sessione?"
         />
 
-        {errore !== "" && <p className="campo-errore">{errore}</p>}
+        {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
         <div className="riga-bottoni">
           <button

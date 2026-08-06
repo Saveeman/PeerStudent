@@ -78,8 +78,11 @@ public class DTOMapper {
 
     /**
      * @param postiOccupati numero di prenotazioni ACCETTATE, calcolato dal service
+     * @param mostraLink    se false, il link della videochiamata NON viene
+     *                      inserito nel DTO: chi non ha diritto di vederlo non
+     *                      lo riceve nemmeno nel JSON
      */
-    public SessioneDTO toSessioneDTO(Sessione s, long postiOccupati) {
+    public SessioneDTO toSessioneDTO(Sessione s, long postiOccupati, boolean mostraLink) {
         if (s == null) return null;
 
         List<ArgomentoDTO> argomenti = s.getArgomenti().stream()
@@ -98,6 +101,7 @@ public class DTOMapper {
                 s.getDescrizione(),
                 s.getDataOra(),
                 s.getLuogo(),
+                mostraLink ? s.getLinkIncontro() : null,
                 s.getModalita(),
                 s.getPostiTotali(),
                 postiOccupati,
@@ -119,6 +123,23 @@ public class DTOMapper {
             tutorNome = s.getTutor().getNome() + " " + s.getTutor().getCognome();
         }
 
+        /* Il link della videochiamata viene comunicato allo studente soltanto
+           quando la sua richiesta e' stata accettata e la sessione si svolge
+           online: e' il modo in cui "riceve" il collegamento.
+           Il collegamento smette di essere mostrato quando l'appuntamento non
+           e' piu' in programma, cioe' se e' stato annullato o si e' gia'
+           svolto: in quei casi non servirebbe a nulla. */
+        String link = null;
+        boolean inProgramma = s != null
+                && (s.getStato() == StatoSessione.APERTA
+                    || s.getStato() == StatoSessione.CHIUSA);
+
+        if (p.getStato() == StatoPrenotazione.ACCETTATA
+                && inProgramma
+                && s.getModalita() == ModalitaSessione.ONLINE) {
+            link = s.getLinkIncontro();
+        }
+
         return new PrenotazioneDTO(
                 p.getId(),
                 p.getStato(),
@@ -130,7 +151,27 @@ public class DTOMapper {
                 s != null ? s.getTitolo() : null,
                 s != null ? s.getDataOra() : null,
                 tutorNome,
+                link,
                 p.getFeedback() != null
+        );
+    }
+
+    public AvvisoDTO toAvvisoDTO(Avviso a) {
+        if (a == null) return null;
+
+        Sessione s = a.getSessione();
+        String tutorNome = null;
+        if (s != null && s.getTutor() != null) {
+            tutorNome = s.getTutor().getNome() + " " + s.getTutor().getCognome();
+        }
+
+        return new AvvisoDTO(
+                a.getId(),
+                a.getTesto(),
+                a.getData(),
+                s != null ? s.getId() : null,
+                s != null ? s.getTitolo() : null,
+                tutorNome
         );
     }
 

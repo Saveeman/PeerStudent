@@ -119,7 +119,7 @@ export function VistaTutor({ utente }: VistaTutorProps): ReactElement {
         </button>
       </div>
 
-      {errore !== "" && <p className="campo-errore">{errore}</p>}
+      {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
       <div className="colonne">
         <section className="colonna-principale">

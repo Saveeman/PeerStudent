@@ -56,45 +56,45 @@ public class SessioneService {
 
     /** Tutte le sessioni aperte, ordinate per data. E' la vista principale dello studente. */
     @Transactional(readOnly = true)
-    public List<SessioneDTO> getSessioniAperte() {
+    public List<SessioneDTO> getSessioniAperte(Long richiedenteId) {
         return sessioneRepository.findByStatoOrderByDataOraAsc(StatoSessione.APERTA).stream()
-                .map(this::convertiConPosti)
+                .map(sessione -> convertiConPosti(sessione, richiedenteId))
                 .toList();
     }
 
     /** Sessioni aperte di una specifica materia: alimenta il filtro per materia. */
     @Transactional(readOnly = true)
-    public List<SessioneDTO> getSessioniPerMateria(Long materiaId) {
+    public List<SessioneDTO> getSessioniPerMateria(Long materiaId, Long richiedenteId) {
         if (!materiaRepository.existsById(materiaId)) {
             throw new RisorsaNonTrovataException("Materia non trovata: " + materiaId);
         }
         return sessioneRepository
                 .findByMateriaIdAndStatoOrderByDataOraAsc(materiaId, StatoSessione.APERTA).stream()
-                .map(this::convertiConPosti)
+                .map(sessione -> convertiConPosti(sessione, richiedenteId))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public SessioneDTO getById(Long id) {
-        return convertiConPosti(getEntityById(id));
+    public SessioneDTO getById(Long id, Long richiedenteId) {
+        return convertiConPosti(getEntityById(id), richiedenteId);
     }
 
     /** Tutte le sessioni create da un tutor: e' la sua area personale. */
     @Transactional(readOnly = true)
-    public List<SessioneDTO> getSessioniDelTutor(Long tutorId) {
+    public List<SessioneDTO> getSessioniDelTutor(Long tutorId, Long richiedenteId) {
         if (!utenteRepository.existsById(tutorId)) {
             throw new RisorsaNonTrovataException("Utente non trovato: " + tutorId);
         }
         return sessioneRepository.findByTutorIdOrderByDataOraDesc(tutorId).stream()
-                .map(this::convertiConPosti)
+                .map(sessione -> convertiConPosti(sessione, richiedenteId))
                 .toList();
     }
 
     /** Ricerca testuale per titolo. */
     @Transactional(readOnly = true)
-    public List<SessioneDTO> cercaPerTitolo(String testo) {
+    public List<SessioneDTO> cercaPerTitolo(String testo, Long richiedenteId) {
         return sessioneRepository.findByTitoloContainsIgnoreCaseOrderByDataOraAsc(testo).stream()
-                .map(this::convertiConPosti)
+                .map(sessione -> convertiConPosti(sessione, richiedenteId))
                 .toList();
     }
 
@@ -131,6 +131,13 @@ public class SessioneService {
             throw new OperazioneNonValidaException("La sessione deve prevedere almeno un posto");
         }
 
+        if (richiesta.modalita() == ModalitaSessione.ONLINE
+                && (richiesta.linkIncontro() == null
+                    || richiesta.linkIncontro().trim().isEmpty())) {
+            throw new OperazioneNonValidaException(
+                    "Per un appuntamento online devi indicare il link della videochiamata");
+        }
+
         Materia materia = materiaRepository.findById(richiesta.materiaId())
                 .orElseThrow(() -> new RisorsaNonTrovataException(
                         "Materia non trovata: " + richiesta.materiaId()));
@@ -147,6 +154,10 @@ public class SessioneService {
                 materia
         );
 
+        if (richiesta.modalita() == ModalitaSessione.ONLINE) {
+            sessione.setLinkIncontro(richiesta.linkIncontro().trim());
+        }
+
         if (richiesta.argomentiIds() != null && !richiesta.argomentiIds().isEmpty()) {
             Set<Argomento> argomenti = new HashSet<>(
                     argomentoRepository.findAllById(richiesta.argomentiIds()));
@@ -154,7 +165,7 @@ public class SessioneService {
         }
 
         Sessione salvata = sessioneRepository.save(sessione);
-        return convertiConPosti(salvata);
+        return convertiConPosti(salvata, tutorId);
     }
 
     /** Chiude le iscrizioni: la sessione resta valida ma non accetta nuove richieste. */
@@ -165,7 +176,7 @@ public class SessioneService {
             throw new OperazioneNonValidaException("La sessione non e' aperta");
         }
         sessione.setStato(StatoSessione.CHIUSA);
-        return convertiConPosti(sessione);
+        return convertiConPosti(sessione, tutorId);
     }
 
     /** Segna la sessione come svolta: da qui in poi gli studenti possono lasciare feedback. */
@@ -176,7 +187,7 @@ public class SessioneService {
             throw new OperazioneNonValidaException("Una sessione annullata non puo' essere completata");
         }
         sessione.setStato(StatoSessione.COMPLETATA);
-        return convertiConPosti(sessione);
+        return convertiConPosti(sessione, tutorId);
     }
 
     @Transactional
@@ -186,7 +197,7 @@ public class SessioneService {
             throw new OperazioneNonValidaException("Una sessione completata non puo' essere annullata");
         }
         sessione.setStato(StatoSessione.ANNULLATA);
-        return convertiConPosti(sessione);
+        return convertiConPosti(sessione, tutorId);
     }
 
     @Transactional
@@ -221,9 +232,18 @@ public class SessioneService {
      * Il conteggio non e' memorizzato nell'entita': si ottiene contando le
      * prenotazioni in stato ACCETTATA.
      */
-    private SessioneDTO convertiConPosti(Sessione sessione) {
+    private SessioneDTO convertiConPosti(Sessione sessione, Long richiedenteId) {
         long occupati = prenotazioneRepository
                 .countBySessioneIdAndStato(sessione.getId(), StatoPrenotazione.ACCETTATA);
-        return mapper.toSessioneDTO(sessione, occupati);
+
+        /* Il link della videochiamata e' riservato: lo vede il tutor che ha
+           creato l'appuntamento e chi e' stato ammesso a parteciparvi. */
+        boolean eIlTutor = richiedenteId != null
+                && sessione.getTutor().getId().equals(richiedenteId);
+        boolean eAmmesso = richiedenteId != null
+                && prenotazioneRepository.existsByStudenteIdAndSessioneIdAndStato(
+                        richiedenteId, sessione.getId(), StatoPrenotazione.ACCETTATA);
+
+        return mapper.toSessioneDTO(sessione, occupati, eIlTutor || eAmmesso);
     }
 }

@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useChiusuraConEsc } from "../hooks/useChiusuraConEsc";
 import type { Utente } from "../types";
 
 /**
@@ -24,16 +25,24 @@ function formattaData(dataIso: string | null): string {
 }
 
 export function MioProfilo({ utente, onChiudi }: MioProfiloProps): ReactElement {
+  // chiusura con il tasto Esc, oltre che con il click fuori
+  useChiusuraConEsc(onChiudi);
+
   const iniziali =
     utente.nome.charAt(0).toUpperCase() + utente.cognome.charAt(0).toUpperCase();
 
   return (
     <div className="sovrapposizione" onClick={onChiudi}>
-      <div className="modale" onClick={(e) => e.stopPropagation()}>
+      <div className="modale"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titolo-mio-profilo"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="profilo-intestazione">
           <div className="avatar">{iniziali}</div>
           <div>
-            <h2 className="modale-titolo">
+            <h2 className="modale-titolo" id="titolo-mio-profilo">
               {utente.nome} {utente.cognome}
             </h2>
             <span className="badge-ruolo">

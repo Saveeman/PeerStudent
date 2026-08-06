@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactElement } from "react";
+import { useChiusuraConEsc } from "../hooks/useChiusuraConEsc";
 import {
   ApiError,
+  avvisiApi,
   feedbackApi,
   prenotazioniApi,
   sessioniApi,
 } from "../api/api";
 import type {
+  Avviso,
   Feedback,
   MaterialeDidattico,
   Prenotazione,
@@ -63,10 +66,14 @@ export function DettaglioSessione({
   utenteId,
   onChiudi,
 }: DettaglioSessioneProps): ReactElement {
+  // chiusura con il tasto Esc, oltre che con il click fuori
+  useChiusuraConEsc(onChiudi);
+
   const [sessione, setSessione] = useState<Sessione | null>(null);
   const [materiali, setMateriali] = useState<MaterialeDidattico[]>([]);
   const [valutazioni, setValutazioni] = useState<Feedback[]>([]);
   const [richieste, setRichieste] = useState<Prenotazione[]>([]);
+  const [avvisi, setAvvisi] = useState<Avviso[]>([]);
   const [inCaricamento, setInCaricamento] = useState<boolean>(true);
   const [errore, setErrore] = useState<string>("");
 
@@ -74,6 +81,10 @@ export function DettaglioSessione({
   const [titoloMateriale, setTitoloMateriale] = useState<string>("");
   const [urlMateriale, setUrlMateriale] = useState<string>("");
   const [formMaterialeAperto, setFormMaterialeAperto] = useState<boolean>(false);
+
+  // testo dell'avviso da inviare ai partecipanti (solo tutor)
+  const [testoAvviso, setTestoAvviso] = useState<string>("");
+  const [avvisoInviato, setAvvisoInviato] = useState<boolean>(false);
 
   const carica = useCallback(async () => {
     try {
@@ -90,8 +101,12 @@ export function DettaglioSessione({
       // le richieste sono visibili solo al tutor proprietario: il back-end
       // risponderebbe 401 a chiunque altro, quindi non le chiediamo nemmeno
       if (dettaglio.tutor.id === utenteId) {
-        const r = await prenotazioniApi.diSessione(sessioneId);
+        const [r, av] = await Promise.all([
+          prenotazioniApi.diSessione(sessioneId),
+          avvisiApi.diSessione(sessioneId),
+        ]);
         setRichieste(r);
+        setAvvisi(av);
       }
     } catch (e) {
       setErrore(
@@ -130,16 +145,39 @@ export function DettaglioSessione({
     }
   }
 
+  async function inviaAvviso() {
+    setErrore("");
+    if (testoAvviso.trim() === "") {
+      setErrore("Scrivi il testo dell'avviso");
+      return;
+    }
+    try {
+      await avvisiApi.invia({ sessioneId, testo: testoAvviso });
+      setTestoAvviso("");
+      setAvvisoInviato(true);
+      setAvvisi(await avvisiApi.diSessione(sessioneId));
+    } catch (e) {
+      setErrore(
+        e instanceof ApiError ? e.message : "Impossibile inviare l'avviso"
+      );
+    }
+  }
+
   const sonoIlTutor = sessione !== null && sessione.tutor.id === utenteId;
 
   return (
     <div className="sovrapposizione" onClick={onChiudi}>
-      <div className="modale modale-larga" onClick={(e) => e.stopPropagation()}>
+      <div className="modale modale-larga"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titolo-dettaglio"
+        onClick={(e) => e.stopPropagation()}
+      >
         {inCaricamento || sessione === null ? (
           <p className="stato-tenue">Caricamento…</p>
         ) : (
           <>
-            <h2 className="modale-titolo">{sessione.titolo}</h2>
+            <h2 className="modale-titolo" id="titolo-dettaglio">{sessione.titolo}</h2>
             <p className="modale-sottotitolo">
               {sessione.tutor.nome} {sessione.tutor.cognome} ·{" "}
               {sessione.materia.nome}
@@ -162,6 +200,19 @@ export function DettaglioSessione({
                     : sessione.luogo}
                 </span>
               </div>
+              {sessione.linkIncontro && (
+                <div className="dettaglio-riga">
+                  <span className="dettaglio-chiave">Link</span>
+                  <a
+                    href={sessione.linkIncontro}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="link-materiale"
+                  >
+                    {sessione.linkIncontro}
+                  </a>
+                </div>
+              )}
               <div className="dettaglio-riga">
                 <span className="dettaglio-chiave">Posti</span>
                 <span>
@@ -245,6 +296,55 @@ export function DettaglioSessione({
               </div>
             )}
 
+            {/* ------------------------- AVVISI (solo tutor) */}
+            {sonoIlTutor && (
+              <>
+                <h3 className="sezione-titolo">Avvisi ai partecipanti</h3>
+                <p className="nota-form">
+                  L'avviso viene recapitato nelle notifiche di chi e' stato
+                  ammesso a questo appuntamento.
+                </p>
+                <textarea
+                  className="campo-textarea"
+                  value={testoAvviso}
+                  onChange={(e) => {
+                    setTestoAvviso(e.target.value);
+                    setAvvisoInviato(false);
+                  }}
+                  placeholder="Es. ricordatevi di portare il libro di testo"
+                />
+                <div className="riga-bottoni">
+                  <button
+                    className="bottone-primario bottone-stretto"
+                    onClick={inviaAvviso}
+                  >
+                    Invia avviso
+                  </button>
+                  {avvisoInviato && (
+                    <span className="stato-ok">Avviso inviato</span>
+                  )}
+                </div>
+
+                {avvisi.length > 0 && (
+                  <ul className="elenco elenco-avvisi">
+                    {avvisi.map((a) => (
+                      <li key={a.id} className="elenco-voce">
+                        <p className="citazione">{a.testo}</p>
+                        <p className="elenco-voce-meta">
+                          {new Date(a.data).toLocaleString("it-IT", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+
             {/* ------------------------- RICHIESTE (solo tutor) */}
             {sonoIlTutor && (
               <>
@@ -295,7 +395,7 @@ export function DettaglioSessione({
               </ul>
             )}
 
-            {errore !== "" && <p className="campo-errore">{errore}</p>}
+            {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
             <div className="riga-bottoni">
               <button className="bottone-secondario" onClick={onChiudi}>

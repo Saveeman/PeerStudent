@@ -23,6 +23,9 @@ public interface PrenotazioneRepository extends JpaRepository<Prenotazione, Long
 
     boolean existsByStudenteIdAndSessioneId(Long studenteId, Long sessioneId);
 
+    boolean existsByStudenteIdAndSessioneIdAndStato(Long studenteId, Long sessioneId,
+                                                    StatoPrenotazione stato);
+
     long countBySessioneIdAndStato(Long sessioneId, StatoPrenotazione stato);
 
     List<Prenotazione> findBySessioneTutorIdAndStatoOrderByDataRichiestaAsc(Long tutorId, StatoPrenotazione stato);

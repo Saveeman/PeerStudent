@@ -192,22 +192,6 @@ export function SchedaSessione({
         </div>
       )}
 
-      {sessione.materiali.length > 0 && (
-        <div className="scheda-materiali">
-          {sessione.materiali.map((m) => (
-            <a
-              key={m.id}
-              href={m.url}
-              target="_blank"
-              rel="noreferrer"
-              className="link-materiale"
-            >
-              {m.titolo}
-            </a>
-          ))}
-        </div>
-      )}
-
       <div className="scheda-piede">{azione()}</div>
 
       {formAperto && (
@@ -243,7 +227,7 @@ export function SchedaSessione({
             </>
           )}
 
-          {erroreForm !== "" && <p className="campo-errore">{erroreForm}</p>}
+          {erroreForm !== "" && <p className="campo-errore" role="alert">{erroreForm}</p>}
 
           <div className="riga-bottoni">
             <button

@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import { catalogoApi, prenotazioniApi, sessioniApi } from "../api/api";
+import { avvisiApi, catalogoApi, prenotazioniApi, sessioniApi } from "../api/api";
 import { FiltroMaterie } from "./FiltroMaterie";
 import { ListaSessioni } from "./ListaSessioni";
 import { MiePrenotazioni } from "./MiePrenotazioni";
+import { PannelloNotifiche } from "./PannelloNotifiche";
 import { FormFeedback } from "./FormFeedback";
 import { BarraRicerca } from "./BarraRicerca";
 import { DettaglioSessione } from "./DettaglioSessione";
 import { ProfiloTutor } from "./ProfiloTutor";
-import type { Materia, Prenotazione, Sessione, Utente } from "../types";
+import type { Avviso, Materia, Prenotazione, Sessione, Utente } from "../types";
 
 /**
  * Vista dello studente: coordina tre componenti figli che non si conoscono fra
@@ -34,6 +35,7 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
   const [materie, setMaterie] = useState<Materia[]>([]);
   const [sessioni, setSessioni] = useState<Sessione[]>([]);
   const [prenotazioni, setPrenotazioni] = useState<Prenotazione[]>([]);
+  const [avvisi, setAvvisi] = useState<Avviso[]>([]);
 
   const [materiaSelezionata, setMateriaSelezionata] = useState<number | null>(null);
   const [inCaricamento, setInCaricamento] = useState<boolean>(true);
@@ -110,10 +112,16 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
   }, [materiaSelezionata, ricerca]);
 
   /** Ricarica le prenotazioni dell'utente. */
+  /* Prenotazioni e avvisi si caricano insieme: gli avvisi che lo studente puo'
+     vedere dipendono dagli appuntamenti a cui e' stato ammesso. */
   const caricaPrenotazioni = useCallback(async () => {
     try {
-      const p = await prenotazioniApi.mie();
+      const [p, a] = await Promise.all([
+        prenotazioniApi.mie(),
+        avvisiApi.miei(),
+      ]);
       setPrenotazioni(p);
+      setAvvisi(a);
     } catch {
       setErrore("Impossibile caricare le tue richieste");
     }
@@ -178,7 +186,7 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
         onCambiaMateria={(id) => setMateriaSelezionata(id)}
       />
 
-      {errore !== "" && <p className="campo-errore">{errore}</p>}
+      {errore !== "" && <p className="campo-errore" role="alert">{errore}</p>}
 
       <div className="colonne">
         <section className="colonna-principale">
@@ -194,11 +202,15 @@ export function VistaStudente({ utente }: VistaStudenteProps): ReactElement {
           />
         </section>
 
-        <MiePrenotazioni
-          prenotazioni={prenotazioni}
-          onRitira={ritira}
-          onValuta={(p) => setPrenotazioneDaValutare(p)}
-        />
+        <div className="colonna-laterale">
+          <MiePrenotazioni
+            prenotazioni={prenotazioni}
+            onRitira={ritira}
+            onValuta={(p) => setPrenotazioneDaValutare(p)}
+          />
+
+          <PannelloNotifiche prenotazioni={prenotazioni} avvisi={avvisi} />
+        </div>
       </div>
 
       {/* Finestra modale: e' il genitore a decidere se mostrarla, perche' un

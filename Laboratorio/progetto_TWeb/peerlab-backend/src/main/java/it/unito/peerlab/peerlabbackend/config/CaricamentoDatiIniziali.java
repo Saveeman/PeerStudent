@@ -29,19 +29,22 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
     private final SessioneRepository sessioneRepository;
     private final PrenotazioneRepository prenotazioneRepository;
     private final MaterialeDidatticoRepository materialeRepository;
+    private final AvvisoRepository avvisoRepository;
 
     public CaricamentoDatiIniziali(UtenteRepository utenteRepository,
                                    MateriaRepository materiaRepository,
                                    ArgomentoRepository argomentoRepository,
                                    SessioneRepository sessioneRepository,
                                    PrenotazioneRepository prenotazioneRepository,
-                                   MaterialeDidatticoRepository materialeRepository) {
+                                   MaterialeDidatticoRepository materialeRepository,
+                                   AvvisoRepository avvisoRepository) {
         this.utenteRepository = utenteRepository;
         this.materiaRepository = materiaRepository;
         this.argomentoRepository = argomentoRepository;
         this.sessioneRepository = sessioneRepository;
         this.prenotazioneRepository = prenotazioneRepository;
         this.materialeRepository = materialeRepository;
+        this.avvisoRepository = avvisoRepository;
     }
 
     @Override
@@ -137,6 +140,7 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
                         + "per riconoscere subito la forma indeterminata.",
                 fraGiorni(6, 10, 30), "Online",
                 ModalitaSessione.ONLINE, 6, StatoSessione.APERTA, elena, analisi);
+        a2.setLinkIncontro("https://meet.google.com/peerstudent-analisi-limiti");
         a2.setArgomenti(Set.of(limiti));
 
         Sessione a3 = new Sessione(
@@ -160,6 +164,7 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
                         + "in un esercizio d'esame.",
                 fraGiorni(7, 11, 0), "Online",
                 ModalitaSessione.ONLINE, 8, StatoSessione.APERTA, luca, algoritmi);
+        b2.setLinkIncontro("https://meet.google.com/peerstudent-algoritmi-grafi");
         b2.setArgomenti(Set.of(grafi));
 
         Sessione b3 = new Sessione(
@@ -185,6 +190,7 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
                         + "e con gli errori tipici da evitare.",
                 fraGiorni(8, 17, 0), "Online",
                 ModalitaSessione.ONLINE, 10, StatoSessione.APERTA, matteo, sas);
+        c2.setLinkIncontro("https://meet.google.com/peerstudent-sas-pattern");
         c2.setArgomenti(Set.of(pattern));
 
         Sessione c3 = new Sessione(
@@ -232,15 +238,25 @@ public class CaricamentoDatiIniziali implements CommandLineRunner {
         // --------------------------------------------------------- MATERIALI
         materialeRepository.saveAll(List.of(
                 new MaterialeDidattico("Esercizi svolti sugli integrali",
-                        "https://esempio.unito.it/esercizi-integrali.pdf", "PDF", a1),
+                        "http://localhost:5173/materiali/esercizi-integrali.pdf", "PDF", a1),
                 new MaterialeDidattico("Schema dei design pattern",
-                        "https://esempio.unito.it/pattern-schema.pdf", "PDF", c2)
+                        "http://localhost:5173/materiali/schema-design-pattern.pdf", "PDF", c2)
+        ));
+
+        // ----------------------------------------------------------- AVVISI
+        avvisoRepository.saveAll(List.of(
+                new Avviso("Ricordate di portare il libro di testo: partiamo dagli "
+                        + "esercizi del capitolo 6.",
+                        LocalDateTime.now().minusHours(20), a1),
+                new Avviso("Ho aggiunto fra i materiali lo schema dei pattern che "
+                        + "useremo durante l'incontro.",
+                        LocalDateTime.now().minusHours(5), c2)
         ));
 
         System.out.println(">>> Dati iniziali caricati:");
         System.out.println("    tutor:    giulia, davide, elena, luca, chiara, matteo  (password: nome+123)");
         System.out.println("    studenti: marco/marco123, sara/sara123");
-        System.out.println("    3 materie | 12 argomenti | 10 sessioni | 4 prenotazioni");
+        System.out.println("    3 materie | 12 argomenti | 10 sessioni | 4 prenotazioni | 2 avvisi");
     }
 
     /** Costruisce una data futura a partire da oggi, con ora e minuti indicati. */

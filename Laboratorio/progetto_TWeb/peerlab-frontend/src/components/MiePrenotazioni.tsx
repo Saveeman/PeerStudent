@@ -71,6 +71,7 @@ export function MiePrenotazioni({
               {p.tutorNome} · {formattaData(p.sessioneDataOra)}
             </p>
 
+
             <div className="elenco-voce-azioni">
               {p.stato === "IN_ATTESA" && (
                 <button
