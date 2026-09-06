@@ -13,7 +13,7 @@
 !*tex
 !*.txt
 !*.md
-!*.LICENSE
+!LICENSE
 
 # 4. Non ignorare il file .gitignore stesso
 !.gitignore
