@@ -51,7 +51,7 @@ export function VistaTutor({ utente }: VistaTutorProps): ReactElement {
     ricaricaTutto();
   }, [ricaricaTutto]);
 
-  /* ------------------------------------------------------------- AZIONI */
+  /* -------------------------------------------------------------  */
 
   async function accetta(prenotazioneId: number) {
     setErrore("");
