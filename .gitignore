@@ -5,6 +5,7 @@
 !*.txt
 !*.md
 !*.tex
+!*.png
 !LICENSE
 
 !*.c
