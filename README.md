@@ -2,8 +2,6 @@
 
 **Piattaforma di micro-tutoraggio fra studenti universitari.**
 
-Un'idea nata da un problema che ho vissuto di persona, sviluppata come progetto di laboratorio universitario e resa pubblica.
-
 ![Schermata di accesso](docs/login.png)
 
 ---
