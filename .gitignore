@@ -1,30 +1,52 @@
-# 1. Ignora tutti i file e le cartelle di default
 *
-
-# 2. Non ignorare le directory 
 !*/
 
-# 3. Non ignorare i file con i formati richiesti 
 !*.pdf
-!*.c
-!*.css
-!*.html
-!*.htl
-!*tex
 !*.txt
 !*.md
+!*.tex
 !LICENSE
 
-# 4. Non ignorare il file .gitignore stesso
+!*.c
+!*.h
+!*.java
+!*.ts
+!*.tsx
+!*.js
+!*.jsx
+
+!*.html
+!*.css
+!*.svg
+
+!*.json
+!*.xml
+!*.properties
+!*.yml
+!*.yaml
+!mvnw
+!mvnw.cmd
+!.mvn/**
+
 !.gitignore
 
-# 5. AUTORIZZA TUTTO IL PROGETTO LABORATORIO
-!Laboratorio/**
-
-# 6. IGNORA I FILE INUTILI E PESANTI AL SUO INTERNO
-.DS_Store
-__MACOSX/
-.idea/
 target/
 *.class
+
+node_modules/
+dist/
+build/
+
+.idea/
+.vscode/
+*.iml
+
+.DS_Store
+__MACOSX/
+Thumbs.db
+
 *.log
+*.tmp
+
+.env
+.env.local
