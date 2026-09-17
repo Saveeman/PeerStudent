@@ -6,6 +6,7 @@
 !*.md
 !*.tex
 !*.png
+!*.gif
 !LICENSE
 
 !*.c
