@@ -4,7 +4,7 @@
 
 Il progetto nasce da un'idea personale, costruita attorno a un problema reale, e si è sviluppato nell'ambito di un laboratorio universitario.
 
-![Schermata di accesso](docs/login.png)
+![Schermata di accesso](docs/demo.gif)
 
 ---
 
