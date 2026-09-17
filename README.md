@@ -2,7 +2,7 @@
 
 **Piattaforma di micro-tutoraggio fra studenti universitari.**
 
-Nato come progetto di laboratorio universitario, ma costruito attorno a un problema reale.
+Il progetto nasce da un'idea personale, costruita attorno a un problema reale, e si è sviluppato nell'ambito di un laboratorio universitario.
 
 ![Schermata di accesso](docs/login.png)
 
@@ -165,3 +165,8 @@ Il progetto è un proof-of-concept e presenta alcuni limiti dichiarati.
 
 Le password non sono cifrate. Gli aggiornamenti non sono in tempo reale: lo studente vede l'esito della propria richiesta ricaricando la pagina, mentre una versione completa userebbe WebSocket. Il link della videochiamata e gli avvisi vengono mostrati nell'applicazione ma non spediti per email, cosa che richiederebbe un servizio SMTP. Le sessioni HTTP risiedono nella memoria del server, il che impedirebbe di scalare su più istanze senza un archivio condiviso. La registrazione degli utenti non è implementata: in un contesto reale l'applicazione si appoggerebbe al sistema di autenticazione di ateneo.
 
+---
+
+## NOTE
+
+Il codice e la documentazione sono consultabili, ma non ne è consentito il riutilizzo. Vedi il file LICENSE.
