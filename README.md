@@ -2,6 +2,8 @@
 
 **Piattaforma di micro-tutoraggio fra studenti universitari.**
 
+Nato come progetto di laboratorio universitario, ma costruito attorno a un problema reale.
+
 ![Schermata di accesso](docs/login.png)
 
 ---
@@ -15,7 +17,7 @@ Funziona, ma solo per chi si trova nel posto giusto. Chi una rete di contatti no
 
 Il risultato è una disparità che non dipende dalla preparazione né dall'impegno, ma solo da quante persone conosci. Due studenti con le stesse difficoltà ricevono aiuto diverso a seconda di chi hanno intorno.
 
-**PeerStudent rende visibile e prenotabile una disponibilità che esiste già.** Chi ha superato un esame pubblica appuntamenti di ripasso su argomenti specifici, indicando quando, dove e per quante persone. Gli altri studenti li cercano per materia o per argomento, consultano il profilo di chi li tiene e inviano una richiesta motivata; il tutor legge le motivazioni e sceglie chi ammettere entro i posti disponibili. Al termine dell'incontro chi vi ha partecipato lascia una valutazione, che va a comporre la reputazione pubblica del tutor.
+**PeerStudent rende visibile e prenotabile una disponibilità che esiste già, ma molto limitata.** Chi ha superato un esame pubblica appuntamenti di ripasso su argomenti specifici, indicando quando, dove e per quante persone. Gli altri studenti li cercano per materia o per argomento, consultano il profilo di chi li tiene e inviano una richiesta motivata; il tutor legge le motivazioni e sceglie chi ammettere entro i posti disponibili. Al termine dell'incontro chi vi ha partecipato lascia una valutazione, che va a comporre la reputazione pubblica del tutor.
 
 Le scelte di progetto seguono da questa idea. **La motivazione è obbligatoria** perché il tutor possa decidere su basi concrete invece che in ordine di arrivo. **I posti sono limitati e li stabilisce chi tiene l'incontro**, perché un ripasso efficace non è una lezione frontale. **Le valutazioni sono pubbliche** perché chi cerca aiuto possa scegliere con cognizione di causa, e perché chi si rende disponibile ne riceva un riconoscimento visibile.
 
